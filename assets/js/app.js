@@ -113,8 +113,7 @@
   function cardImg(l) {
     var src = (l.images && l.images[0]) || '';
     if (!src) src = AQ.placeholder(l.title);
-    return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(l.title) + '" loading="lazy" ' +
-      'onerror="this.onerror=null;this.src=\'' + AQ.placeholder('') + '\'">';
+    return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(l.title) + '" loading="lazy">';
   }
 
   function cardHTML(l) {
@@ -431,4 +430,11 @@
   };
 
   window.App = App;
+
+  /* load data (cache-busted) then boot — external, no inline scripts (CSP) */
+  var s = document.createElement('script');
+  s.src = 'data/listings.js?t=' + Date.now();
+  s.onload = function () { App.boot(); };
+  s.onerror = function () { App.boot(); };
+  document.head.appendChild(s);
 })();

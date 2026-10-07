@@ -4,7 +4,6 @@ window.LISTINGS_DATA = {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
     "whatsapp": "201028960555",
-    "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     "owner": "",
     "repo": "",
     "branch": "main"

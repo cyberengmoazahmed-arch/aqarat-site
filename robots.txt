@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /_9f3k7x2q.html
+Disallow: /data/auth.js

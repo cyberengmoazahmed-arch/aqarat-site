@@ -142,6 +142,108 @@
     return Promise.reject(new Error('crypto unavailable'));
   };
 
+  /* ---------- password hashing (PBKDF2-SHA256, salted) ---------- */
+  function hexToBytes(hex) {
+    var arr = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < arr.length; i++) arr[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return arr;
+  }
+
+  function pbkdf2Hex(password, saltHex, iterations) {
+    if (!global.crypto || !global.crypto.subtle) {
+      return Promise.reject(new Error('crypto unavailable'));
+    }
+    return global.crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits']
+    ).then(function (key) {
+      return global.crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt: hexToBytes(saltHex), iterations: iterations, hash: 'SHA-256' },
+        key,
+        256
+      );
+    }).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+    });
+  }
+
+  Common.hashPassword = function (password) {
+    var saltBytes = new Uint8Array(16);
+    global.crypto.getRandomValues(saltBytes);
+    var salt = Array.prototype.map.call(saltBytes, function (b) {
+      return ('0' + b.toString(16)).slice(-2);
+    }).join('');
+    var iter = 150000;
+    return pbkdf2Hex(password, salt, iter).then(function (h) {
+      return 'pbkdf2$' + iter + '$' + salt + '$' + h;
+    });
+  };
+
+  Common.verifyPassword = function (password, stored) {
+    if (!stored) return Promise.resolve(false);
+    try {
+      if (stored.indexOf('pbkdf2$') === 0) {
+        var p = stored.split('$');
+        var iter = parseInt(p[1], 10);
+        var salt = p[2];
+        var want = p[3];
+        if (!iter || !salt || !want) return Promise.resolve(false);
+        return pbkdf2Hex(password, salt, iter).then(function (h) {
+          return h === want;
+        }).catch(function () { return false; });
+      }
+      /* legacy sha256 hex */
+      return Common.sha256(password).then(function (h) {
+        return h === stored;
+      }).catch(function () { return false; });
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  };
+
+  Common.getAuth = function () {
+    var a = global.LISTINGS_AUTH;
+    if (!a || typeof a !== 'object') a = {};
+    var tg = a.telegram && typeof a.telegram === 'object' ? a.telegram : {};
+    return {
+      adminEmail: String(a.adminEmail || '').trim().toLowerCase(),
+      passwordHash: String(a.passwordHash || ''),
+      ipAllow: Array.isArray(a.ipAllow) ? a.ipAllow.map(function (x) { return String(x).trim(); }).filter(Boolean) : [],
+      telegram: {
+        enabled: !!tg.enabled,
+        token: String(tg.token || ''),
+        chatId: String(tg.chatId || '')
+      }
+    };
+  };
+
+  Common.publicIp = function () {
+    return fetch('https://api.ipify.org?format=json')
+      .then(function (r) { if (!r.ok) throw new Error('ip'); return r.json(); })
+      .then(function (j) { return String(j.ip || ''); });
+  };
+
+  Common.telegramSend = function (token, chatId, text) {
+    if (!token || !chatId) return Promise.reject(new Error('Telegram غير مفعّل'));
+    return fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: text })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) throw new Error(j.description || 'فشل الإرسال');
+      return true;
+    });
+  };
+
+  Common.dataAuthContent = function (auth) {
+    return 'window.LISTINGS_AUTH = ' + JSON.stringify(auth, null, 2) + ';\n';
+  };
+
   /* ---------- base64 for utf-8 text / bytes ---------- */
   Common.utf8ToBase64 = function (str) {
     var bytes = new TextEncoder().encode(str);
@@ -365,6 +467,17 @@
         );
       });
     },
+    saveAuthFile: function (auth) {
+      var content = Common.utf8ToBase64(Common.dataAuthContent(auth));
+      return Common.github.getFile('data/auth.js').then(function (f) {
+        return Common.github.putFile(
+          'data/auth.js',
+          'chore: تحديث بيانات الدخول ' + new Date().toISOString().slice(0, 19).replace('T', ' '),
+          content,
+          f ? f.sha : null
+        );
+      });
+    },
     saveImage: function (fileName, base64) {
       return Common.github.getFile('assets/listings/' + fileName).then(function (f) {
         return Common.github.putFile(
@@ -419,6 +532,17 @@
       '</g></svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   };
+
+  /* ---------- broken image fallback (no inline handlers => CSP safe) ---------- */
+  if (global.document && global.document.addEventListener) {
+    global.document.addEventListener('error', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'IMG' && t.getAttribute('src') && !t.getAttribute('data-fb')) {
+        t.setAttribute('data-fb', '1');
+        t.src = Common.placeholder('');
+      }
+    }, true);
+  }
 
   global.AQ = Common;
 })(window);

@@ -5,9 +5,13 @@
   'use strict';
 
   var Admin = {};
-  var DEFAULT_HASH = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'; /* sha256("admin123") */
+  var LOCK_MAX = 5;
+  var LOCK_MS = 15 * 60 * 1000;   /* 15 min lockout after 5 fails */
+  var IDLE_MS = 30 * 60 * 1000;   /* auto logout after 30 min idle */
+  var idleTimer = null;
   var st = {
     data: null,
+    auth: null,
     editing: null,
     isNew: false,
     removed: [],
@@ -30,12 +34,41 @@
 
   function thumb(l) {
     var src = (l.images && l.images[0]) || AQ.placeholder(l.title || '');
-    return '<img class="row__img" src="' + AQ.esc(src) + '" alt="" loading="lazy" ' +
-      'onerror="this.onerror=null;this.src=\'' + AQ.placeholder('') + '\'">';
+    return '<img class="row__img" src="' + AQ.esc(src) + '" alt="" loading="lazy">';
   }
 
   /* ---------- auth ---------- */
+  function lockState() {
+    var l = AQ.store.get('lock', { n: 0, until: 0 });
+    if (l && l.until && Date.now() < l.until) return { locked: true, until: l.until, n: l.n };
+    return { locked: false, until: 0, n: (l && l.n) || 0 };
+  }
+
+  function registerFail() {
+    var l = AQ.store.get('lock', { n: 0, until: 0 });
+    if (!l.until || Date.now() >= l.until) l = { n: 0, until: 0 };
+    l.n += 1;
+    if (l.n >= LOCK_MAX) {
+      l.until = Date.now() + LOCK_MS;
+      AQ.toast('5 محاولات غلط — الدخول محجوب 15 دقيقة', 'err');
+    } else {
+      AQ.toast('إيميل أو كلمة سر غلط — فاضل ' + (LOCK_MAX - l.n) + ' محاولات', 'err');
+    }
+    AQ.store.set('lock', l);
+  }
+
+  function resetIdle() {
+    if (idleTimer) clearTimeout(idleTimer);
+    if ($('#appView') && $('#appView').hidden) return;
+    idleTimer = setTimeout(function () {
+      AQ.store.session.del('admin');
+      showLogin();
+      AQ.toast('خرجت تلقائياً بعد نص ساعة بدون نشاط', 'info');
+    }, IDLE_MS);
+  }
+
   function showLogin() {
+    if (idleTimer) clearTimeout(idleTimer);
     $('#loginView').hidden = false;
     $('#appView').hidden = true;
     $('#btnLogout').hidden = true;
@@ -46,31 +79,109 @@
     $('#loginView').hidden = true;
     $('#appView').hidden = false;
     $('#btnLogout').hidden = false;
+    st.auth = AQ.getAuth();
     fillSettings();
     renderRows();
     renderConn();
     switchTab(st.tab, true);
+    resetIdle();
   }
 
-  function login(pass) {
-    var want = st.data.settings.passwordHash || '';
-    if (!want) { /* no hash set yet — accept nothing */
-      $('#fldLogin').classList.add('field--err');
+  function login(email, pass) {
+    var lock = lockState();
+    if (lock.locked) {
+      var mins = Math.ceil((lock.until - Date.now()) / 60000);
+      AQ.toast('الدخول محجوب — جرّب بعد ' + mins + ' دقيقة', 'err');
       return;
     }
-    AQ.sha256(pass).then(function (h) {
-      if (h === want) {
-        AQ.store.session.set('admin', 1);
-        showApp();
-        AQ.toast('أهلاً بيك ✓', 'ok');
+    var auth = AQ.getAuth();
+    email = String(email || '').trim().toLowerCase();
+
+    var emailOk = !!auth.adminEmail && email === auth.adminEmail;
+    $('#fldEmail').classList.toggle('field--err', !emailOk);
+    if (!emailOk) { registerFail(); return; }
+
+    AQ.verifyPassword(pass, auth.passwordHash).then(function (ok) {
+      if (ok) {
+        AQ.store.set('lock', { n: 0, until: 0 });
+        $('#fldLogin').classList.remove('field--err');
+        $('#loginPass').value = '';
+        if (AQ.getAuth().telegram.enabled) startOtp();
+        else finishLogin();
       } else {
         $('#fldLogin').classList.add('field--err');
         $('#loginPass').value = '';
         $('#loginPass').focus();
+        registerFail();
       }
     }).catch(function () {
-      AQ.toast('المتصفح مايدعمش التشفير هنا — افتح الصفحة على localhost أو https', 'err');
+      AQ.toast('المتصفح مايدعمش التشفير هنا — افتح الصفحة على https', 'err');
     });
+  }
+
+  var pendingOtp = null;
+
+  function finishLogin() {
+    pendingOtp = null;
+    $('#otpForm').hidden = true;
+    $('#loginForm').hidden = false;
+    AQ.store.session.set('admin', 1);
+    showApp();
+    AQ.toast('أهلاً بيك ✓', 'ok');
+  }
+
+  function backToPassword() {
+    pendingOtp = null;
+    $('#otpForm').hidden = true;
+    $('#loginForm').hidden = false;
+    $('#otpCode').value = '';
+    $('#fldOtp').classList.remove('field--err');
+    setTimeout(function () { var p = $('#loginPass'); if (p) p.focus(); }, 50);
+  }
+
+  function startOtp() {
+    var tg = AQ.getAuth().telegram;
+    window.__otpTried = (window.__otpTried || 0) + 1;
+    var code = String(Math.floor(100000 + Math.random() * 900000));
+    pendingOtp = { code: code, exp: Date.now() + 5 * 60 * 1000, tries: 0 };
+    AQ.toast('جاري إرسال كود التحقق على تليجرام…');
+    AQ.telegramSend(tg.token, tg.chatId,
+      '🔐 كود دخول لوحة تحكم العقارات:\n' + code + '\n\nصالح 5 دقائق — لو مش انت، متكتبهوش لحد.'
+    ).then(function () {
+      if (!pendingOtp) return;
+      $('#loginForm').hidden = true;
+      $('#otpForm').hidden = false;
+      $('#otpCode').value = '';
+      $('#fldOtp').classList.remove('field--err');
+      setTimeout(function () { $('#otpCode').focus(); }, 60);
+    }).catch(function (e) {
+      pendingOtp = null;
+      AQ.toast('تعذّر إرسال الكود: ' + e.message, 'err');
+    });
+  }
+
+  function verifyOtp() {
+    if (!pendingOtp) { backToPassword(); return; }
+    var v = ($('#otpCode').value || '').replace(/\D/g, '');
+    if (Date.now() > pendingOtp.exp) {
+      pendingOtp = null;
+      backToPassword();
+      AQ.toast('الكود انتهت صلاحيته — جرّب تاني', 'err');
+      return;
+    }
+    pendingOtp.tries++;
+    if (v === pendingOtp.code) {
+      finishLogin();
+    } else if (pendingOtp.tries >= 3) {
+      pendingOtp = null;
+      backToPassword();
+      registerFail();
+      AQ.toast('3 أكواد غلط — رجعناك للباسورد', 'err');
+    } else {
+      $('#fldOtp').classList.add('field--err');
+      $('#otpCode').value = '';
+      $('#otpCode').focus();
+    }
   }
 
   /* ---------- tabs ---------- */
@@ -229,7 +340,7 @@
       var cap = src.indexOf('data:') === 0 ? 'جديدة' :
         (src.indexOf('http') === 0 ? 'رابط' : src.split('/').pop());
       return '<figure class="' + (src.indexOf('data:') === 0 ? 'new' : '') + '">' +
-        '<img src="' + AQ.esc(src) + '" alt="" onerror="this.style.opacity=.3">' +
+        '<img src="' + AQ.esc(src) + '" alt="">' +
         '<figcaption>' + AQ.esc(cap) + '</figcaption>' +
         '<button class="rm" type="button" data-rm="' + i + '" aria-label="حذف الصورة">✕</button>' +
       '</figure>';
@@ -371,9 +482,15 @@
   /* ---------- settings ---------- */
   function fillSettings() {
     var s = st.data.settings;
+    st.auth = AQ.getAuth();
     $('#sName').value = s.siteName || '';
     $('#sTag').value = s.tagline || '';
     $('#sWa').value = s.whatsapp || '';
+    $('#sEmail').value = st.auth.adminEmail || '';
+    $('#sIps').value = (st.auth.ipAllow || []).join('\n');
+    $('#sTgToken').value = st.auth.telegram.token || '';
+    $('#sTgChat').value = st.auth.telegram.chatId || '';
+    $('#sTgEnabled').checked = !!st.auth.telegram.enabled;
     $('#ahBrand').textContent = s.siteName || 'عقاراتي';
     var r = AQ.github.repoInfo();
     $('#gOwner').value = r.owner || '';
@@ -413,32 +530,114 @@
     }
   }
 
-  async function changePassword() {
+  async function saveCredentials() {
+    var email = $('#sEmail').value.trim().toLowerCase();
     var p1 = $('#sPass').value;
     var p2 = $('#sPass2').value;
     var ok = true;
-    $('#fldNewPass').classList.toggle('field--err', p1.length < 6);
-    if (p1.length < 6) ok = false;
-    var match = p1 === p2;
-    $('#sPass2').closest('.field').classList.toggle('field--err', !match);
-    if (!match) ok = false;
-    if (!ok) { AQ.toast('راجع كلمة السر', 'err'); return; }
+
+    var emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    $('#fldEmail2').classList.toggle('field--err', !emailOk);
+    if (!emailOk) ok = false;
+
+    var changePass = p1.length > 0;
+    if (changePass) {
+      $('#fldNewPass').classList.toggle('field--err', p1.length < 6);
+      if (p1.length < 6) ok = false;
+      var match = p1 === p2;
+      $('#sPass2').closest('.field').classList.toggle('field--err', !match);
+      if (!match) ok = false;
+    }
+    if (!ok) { AQ.toast('راجع بيانات الدخول', 'err'); return; }
 
     try {
-      st.data.settings.passwordHash = await AQ.sha256(p1);
-      st.data.updated = Date.now();
-      window.LISTINGS_DATA = st.data;
-      $('#sPass').value = $('#sPass2').value = '';
+      st.auth.adminEmail = email;
+      if (changePass) {
+        AQ.toast('جاري تشفير كلمة السر الجديدة…');
+        st.auth.passwordHash = await AQ.hashPassword(p1);
+        $('#sPass').value = $('#sPass2').value = '';
+      }
+      window.LISTINGS_AUTH = st.auth;
       if (AQ.github.connected()) {
-        await AQ.github.saveDataFile(st.data);
-        AQ.toast('تم تغيير كلمة السر ونشرها ✓', 'ok');
+        await AQ.github.saveAuthFile(st.auth);
+        AQ.toast('تم حفظ بيانات الدخول ونشرها ✓', 'ok');
       } else {
-        downloadDataFile();
-        AQ.toast('تم تغيير كلمة السر + تنزيل الملف للنشر', 'ok');
+        downloadAuthFile();
+        AQ.toast('تم التشفير + تنزيل ملف auth.js لاستبداله في الريبو', 'ok');
       }
     } catch (e) {
       AQ.toast('حصل خطأ: ' + e.message, 'err');
     }
+  }
+
+  async function saveSecurity() {
+    var ips = $('#sIps').value.split(/[\s,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var token = $('#sTgToken').value.trim();
+    var chat = $('#sTgChat').value.trim();
+    var enabled = $('#sTgEnabled').checked;
+
+    if (enabled && (!token || !chat)) {
+      AQ.toast('فعّلت تليجرام لازم تكتب التوكن والـ Chat ID', 'err');
+      return;
+    }
+    if (enabled && !/^\d+:[A-Za-z0-9_-]{10,}$/.test(token)) {
+      AQ.toast('شكل الـ Bot Token غلط', 'err');
+      return;
+    }
+    if (enabled && !/^\d+$/.test(chat)) {
+      AQ.toast('الـ Chat ID لازم أرقام بس', 'err');
+      return;
+    }
+
+    st.auth.ipAllow = ips;
+    st.auth.telegram = { enabled: enabled, token: token, chatId: chat };
+    window.LISTINGS_AUTH = st.auth;
+    if (enabled) {
+      busy(true);
+      try {
+        await AQ.telegramSend(token, chat, '✅ اتربطت لوحة تحكم العقارات — الكود هيوصلك هنا بعد كل دخول.');
+        AQ.toast('تم حفظ الأمان + اختبار تليجرام نجح ✓', 'ok');
+      } catch (e) {
+        AQ.toast('اتحفظ بس فشل اختبار تليجرام: ' + e.message, 'err');
+      }
+      busy(false);
+    } else {
+      AQ.toast('تم حفظ إعدادات الأمان ✓', 'ok');
+    }
+    if (AQ.github.connected()) {
+      busy(true);
+      try {
+        await AQ.github.saveAuthFile(st.auth);
+        AQ.toast('اترفع على GitHub ✓', 'ok');
+      } catch (e) {
+        AQ.toast('فشل الرفع: ' + e.message, 'err');
+      }
+      busy(false);
+    } else {
+      downloadAuthFile();
+      AQ.toast('تنزّل ملف auth.js واستبدله في الريبو', 'ok');
+    }
+  }
+
+  function testTelegram() {
+    var token = $('#sTgToken').value.trim();
+    var chat = $('#sTgChat').value.trim();
+    if (!token || !chat) { AQ.toast('اكتب التوكن والـ Chat ID الأول', 'err'); return; }
+    busy(true);
+    AQ.telegramSend(token, chat, '📨 اختبار من لوحة تحكم العقارات — لو شايف الرسالة دي يبقى تمام ✓')
+      .then(function () { AQ.toast('تم إرسال رسالة الاختبار ✓', 'ok'); })
+      .catch(function (e) { AQ.toast('فشل: ' + e.message, 'err'); })
+      .finally(function () { busy(false); });
+  }
+
+  function downloadAuthFile() {
+    var blob = new Blob([AQ.dataAuthContent(st.auth)], { type: 'application/javascript;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'auth.js';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
   }
 
   /* ---------- github connect ---------- */
@@ -537,7 +736,22 @@
   function bind() {
     $('#loginForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      login($('#loginPass').value);
+      login($('#loginEmail').value, $('#loginPass').value);
+    });
+    $('#otpForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      verifyOtp();
+    });
+    $('#otpBack').addEventListener('click', backToPassword);
+    $('#otpCode').addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 6);
+      $('#fldOtp').classList.remove('field--err');
+    });
+
+    ['click', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
+      window.addEventListener(ev, function () {
+        if ($('#appView') && !$('#appView').hidden) resetIdle();
+      }, { passive: true });
     });
 
     $('#btnLogout').addEventListener('click', function () {
@@ -596,7 +810,9 @@
     });
 
     $('#btnSaveSettings').addEventListener('click', saveSettings);
-    $('#btnPass').addEventListener('click', changePassword);
+    $('#btnPass').addEventListener('click', saveCredentials);
+    $('#btnSecurity').addEventListener('click', saveSecurity);
+    $('#btnTgTest').addEventListener('click', testTelegram);
     $('#btnGitSave').addEventListener('click', saveGit);
     $('#btnGitTest').addEventListener('click', testGit);
     $('#btnGitForget').addEventListener('click', function () {
@@ -617,16 +833,51 @@
   }
 
   /* ---------- boot ---------- */
+  function checkIpGate(done) {
+    var allow = AQ.getAuth().ipAllow;
+    if (!allow.length) { done(true, ''); return; }
+    AQ.publicIp().then(function (ip) {
+      done(allow.indexOf(ip) > -1, ip);
+    }).catch(function () {
+      AQ.toast('تعذّر التحقق من الـ IP — تم السماح مؤقتاً', 'err');
+      done(true, '');
+    });
+  }
+
   Admin.boot = function () {
     st.data = JSON.parse(JSON.stringify(AQ.getData()));
-    if (!st.data.settings.passwordHash) {
-      st.data.settings.passwordHash = DEFAULT_HASH; /* recovery: empty hash => password is admin123 */
-    }
+    st.auth = AQ.getAuth();
     bind();
     fillSettings();
-    if (AQ.store.session.get('admin', 0)) showApp();
-    else showLogin();
+    checkIpGate(function (ok, ip) {
+      if (ok) {
+        $('#loginCard').hidden = false;
+        $('#ipBlocked').hidden = true;
+        if (AQ.store.session.get('admin', 0)) showApp();
+        else showLogin();
+      } else {
+        showLogin();
+        $('#loginCard').hidden = true;
+        $('#ipBlocked').hidden = false;
+        $('#myIp').textContent = ip || 'غير معروف';
+      }
+    });
   };
 
   window.Admin = Admin;
+
+  /* load data + auth (cache-busted) then boot — external, no inline scripts (CSP) */
+  function loadScript(src) {
+    return new Promise(function (resolve) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = resolve;
+      document.head.appendChild(s);
+    });
+  }
+  Promise.all([
+    loadScript('data/listings.js?t=' + Date.now()),
+    loadScript('data/auth.js?t=' + Date.now())
+  ]).then(function () { Admin.boot(); });
 })();

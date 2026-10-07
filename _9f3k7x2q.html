@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com https://api.ipify.org https://api.telegram.org; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>لوحة التحكم — عقاراتي</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0A0A0A">
@@ -15,7 +16,7 @@
 
 <header class="ahdr">
   <div class="wrap ahdr__in">
-    <a class="brand" href="admin.html">
+    <a class="brand" href="#">
       <span class="brand__mark">ع</span>
       <span>لوحة التحكم<small class="brand__sub" id="ahBrand">عقاراتي</small></span>
     </a>
@@ -28,22 +29,44 @@
 
 <!-- ============ LOGIN ============ -->
 <section class="login" id="loginView">
-  <div class="login__card">
+  <div class="login__card" id="loginCard">
     <div class="brand__mark">ع</div>
     <h1>لوحة التحكم</h1>
-    <p>اكتب كلمة السر عشان تضيف أو تعدل الشقق</p>
+    <p>اكتب الإيميل وكلمة السر عشان تضيف أو تعدل الشقق</p>
     <form id="loginForm" novalidate>
+      <div class="field" id="fldEmail">
+        <label for="loginEmail">الإيميل</label>
+        <input id="loginEmail" type="email" autocomplete="username" placeholder="name@example.com" style="direction:ltr;text-align:left" autofocus>
+        <div class="err-msg">الإيميل غير صحيح</div>
+      </div>
       <div class="field" id="fldLogin">
         <label for="loginPass">كلمة السر</label>
-        <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" autofocus>
+        <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••">
         <div class="err-msg">كلمة السر غير صحيحة</div>
       </div>
       <button class="btn btn--dark" type="submit">دخول</button>
     </form>
+    <form id="otpForm" novalidate hidden>
+      <div class="field" id="fldOtp">
+        <label for="otpCode">كود التحقق — بيوصلك على تليجرام</label>
+        <input id="otpCode" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" style="direction:ltr;text-align:left;letter-spacing:6px;text-align:center;font-size:22px">
+        <div class="err-msg">الكود غلط أو انتهت صلاحيته</div>
+      </div>
+      <button class="btn btn--dark" type="submit">✓ تحقق ودخول</button>
+      <button class="btn btn--ghost" type="button" id="otpBack">رجوع</button>
+      <div class="login__hint" id="otpHint">الكود صالح 5 دقائق.</div>
+    </form>
     <div class="login__hint">
-      كلمة السر الافتراضية: <code>admin123</code><br>
-      غيّرها من تبويب «الإعدادات» بعد أول دخول.
+      لوحة تحكم خاصة — الدخول بالإيميل + كلمة السر (+ كود تليجرام لو مفعّل).<br>
+      5 محاولات غلط = محجوب 15 دقيقة.
     </div>
+  </div>
+  <div class="login__card" id="ipBlocked" hidden>
+    <div class="brand__mark">⛔</div>
+    <h1>الدخول مسموح من جهازك بس</h1>
+    <p>اللوحة مقفولة على IP محدد. الـ IP بتاعك الآن: <b id="myIp" style="direction:ltr">…</b></p>
+    <p class="login__hint">لو ده جهازك، افتح اللوحة من جهاز تاني مسموح وإضف الـ IP ده من: الإعدادات ← الأمان الإضافي.<br>
+    ولو قفلت على نفسك بالغلط: احذف سطر <code>ipAllow</code> من ملف <code>data/auth.js</code> في الريبو.</p>
   </div>
 </section>
 
@@ -191,22 +214,66 @@
         </div>
 
         <div class="card-box">
-          <h3>كلمة السر</h3>
-          <div class="sub">غيّرها من هنا — محدش يقدر يدخل لوحة التحكم من غيرها</div>
+          <h3>بيانات الدخول</h3>
+          <div class="sub">إيميل اللوحة + كلمة السر (سيب خانة كلمة السر فاضية لو مش عايز تغيّرها)</div>
           <div class="fgrid">
+            <div class="field full" id="fldEmail2">
+              <label for="sEmail">إيميل الدخول</label>
+              <input id="sEmail" type="email" autocomplete="username" placeholder="name@example.com" style="direction:ltr;text-align:left">
+              <div class="err-msg">إيميل غير صحيح</div>
+            </div>
             <div class="field full" id="fldNewPass">
               <label for="sPass">كلمة السر الجديدة</label>
-              <input id="sPass" type="text" placeholder="اكتب كلمة سر قوية">
+              <input id="sPass" type="text" autocomplete="new-password" placeholder="اتركها فاضية لو مش عايز تغيّرها">
               <div class="err-msg">كلمة السر قصيرة (6 حروف على الأقل)</div>
             </div>
             <div class="field full">
               <label for="sPass2">تأكيد كلمة السر</label>
-              <input id="sPass2" type="text" placeholder="اكتبها تاني">
+              <input id="sPass2" type="text" autocomplete="new-password" placeholder="اكتبها تاني">
               <div class="err-msg">الكلمتين مش متطابقتين</div>
             </div>
           </div>
           <div class="sactions">
-            <button class="btn btn--dark" type="button" id="btnPass">🔑 تغيير كلمة السر</button>
+            <button class="btn btn--dark" type="button" id="btnPass">🔐 حفظ بيانات الدخول</button>
+          </div>
+        </div>
+
+        <div class="card-box full">
+          <h3>الأمان الإضافي (IP + كود تليجرام)</h3>
+          <div class="sub">طبقتين اختياريتين فوق الإيميل والباسورد — الشغل بطيء شوية بس أأمن</div>
+          <div class="fgrid">
+            <div class="field full">
+              <label for="sIps">الـ IP المسموح بفتح اللوحة (واحد أو أكتر — سطر لكل واحد)</label>
+              <textarea id="sIps" rows="3" placeholder="197.45.12.33" style="direction:ltr;text-align:left;font-family:monospace"></textarea>
+              <div class="hint">سيبها فاضية = مسموح من أي جهاز. ملاحظة: الـ IP بيتغيّر مع الموبايل/الراوتر — لو اتحجزت، احذف السطر من <code>data/auth.js</code>.</div>
+            </div>
+            <div class="field">
+              <label for="sTgToken">Bot Token (من @BotFather)</label>
+              <input id="sTgToken" type="password" placeholder="123456789:AA…" style="direction:ltr;text-align:left" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="sTgChat">Chat ID بتاعك</label>
+              <input id="sTgChat" type="text" placeholder="123456789" style="direction:ltr;text-align:left" autocomplete="off">
+            </div>
+            <div class="field full">
+              <div class="checks">
+                <label><input id="sTgEnabled" type="checkbox"> فعّل كود التحقق على تليجرام (خطوة تالتة بعد الإيميل والباسورد)</label>
+              </div>
+            </div>
+          </div>
+          <div class="sactions">
+            <button class="btn btn--dark" type="button" id="btnSecurity">🛡️ حفظ الأمان</button>
+            <button class="btn btn--ghost" type="button" id="btnTgTest">📨 اختبار إرسال تليجرام</button>
+          </div>
+          <div class="help">
+            <b>تجهيز التليجرام (3 دقايق):</b>
+            <ol>
+              <li>افتح تليجرام وابحث عن <code>@BotFather</code> ← <code>/newbot</code> ← اديه اسم، هيدوسلك <b>Token</b></li>
+              <li>ابحث عن روبوتك وأرسله أي رسالة (زي <code>hi</code>)</li>
+              <li>افتح <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> في المتصفح — هتلاقي <code>"chat":{"id":123...</code> — ده الـ Chat ID</li>
+              <li>الصق الاتنين فوق وفعّل الخانة ودوّس «حفظ الأمان»</li>
+            </ol>
+            <b>تحذير صريح:</b> الموقع ثابت (static) فـ الـ Bot Token متخزّن في <code>data/auth.js</code> اللي أي حد يقدر يقراه — ميزة إنه مش هيشوف رسائلك، بس يقدر يبعتلك رسائل مزعجة بنفس الروبوت. لو عايز حماية أقوى محتاج سيرفر (Backend).
           </div>
         </div>
 
@@ -266,14 +333,5 @@
 
 <script src="assets/js/common.js"></script>
 <script src="assets/js/admin.js"></script>
-<script>
-(function(){
-  var s = document.createElement('script');
-  s.src = 'data/listings.js?t=' + Date.now();
-  s.onload = function(){ window.Admin.boot(); };
-  s.onerror = function(){ window.Admin.boot(); };
-  document.body.appendChild(s);
-})();
-</script>
 </body>
 </html>
