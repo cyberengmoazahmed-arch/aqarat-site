@@ -35,11 +35,16 @@
     return n.toLocaleString('en-US');
   };
 
+  Common.hasPrice = function (l) {
+    return !!(l && Number(l.price) > 0);
+  };
+
   Common.priceNote = function (listing) {
     return listing.type === 'rent' ? 'جنيه / شهر' : 'جنيه';
   };
 
   Common.priceLabel = function (listing) {
+    if (!Common.hasPrice(listing)) return 'السعر عند الاتصال';
     return Common.fmtNum(listing.price) + ' ' + Common.priceNote(listing);
   };
 

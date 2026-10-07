@@ -55,6 +55,7 @@
   /* ---------- filtering ---------- */
   function matchPrice(l, v) {
     if (v === 'all') return true;
+    if (!AQ.hasPrice(l)) return false;
     var parts = v.split('-');
     if (parts[0] === 'rent') {
       if (l.type !== 'rent') return false;
@@ -88,9 +89,15 @@
       return true;
     });
     list.sort(function (a, b) {
-      if (state.sort === 'low') return a.price - b.price;
-      if (state.sort === 'high') return b.price - a.price;
       if (state.sort === 'area') return (b.area || 0) - (a.area || 0);
+      if (state.sort === 'low' || state.sort === 'high') {
+        var av = AQ.hasPrice(a) ? Number(a.price) : null;
+        var bv = AQ.hasPrice(b) ? Number(b.price) : null;
+        if (av === null && bv === null) return 0;
+        if (av === null) return 1;   /* بدون سعر يروح للآخر في الترتيبين */
+        if (bv === null) return -1;
+        return state.sort === 'low' ? av - bv : bv - av;
+      }
       return (b.createdAt || 0) - (a.createdAt || 0);
     });
     return list;
@@ -132,7 +139,11 @@
           '<h3 class="card__title" data-open="' + AQ.esc(l.id) + '">' + AQ.esc(l.title) + '</h3>' +
           '<div class="card__loc">📍 ' + AQ.esc(l.city || '') + (l.district ? ' — ' + AQ.esc(l.district) : '') + '</div>' +
           '<div class="card__chips">' + chips + '</div>' +
-          '<div class="card__price"><b>' + AQ.fmtNum(l.price) + '</b><span>' + AQ.priceNote(l) + '</span></div>' +
+          '<div class="card__price">' +
+          (AQ.hasPrice(l)
+            ? '<b>' + AQ.fmtNum(l.price) + '</b><span>' + AQ.priceNote(l) + '</span>'
+            : '<b class="is-na">السعر عند الاتصال</b>') +
+        '</div>' +
           '<div class="card__actions">' +
             '<button class="btn btn--dark" data-book="' + AQ.esc(l.id) + '">احجز الآن</button>' +
             '<button class="btn btn--ghost btn--icon" data-open="' + AQ.esc(l.id) + '" aria-label="تفاصيل">التفاصيل</button>' +
@@ -227,7 +238,11 @@
           '</div>' +
           '<h2 class="det__title">' + AQ.esc(l.title) + '</h2>' +
           '<div class="card__loc">📍 ' + AQ.esc(l.city || '') + (l.district ? ' — ' + AQ.esc(l.district) : '') + '</div>' +
-          '<div class="det__price">' + AQ.fmtNum(l.price) + ' <small>' + AQ.priceNote(l) + '</small></div>' +
+          '<div class="det__price' + (AQ.hasPrice(l) ? '' : ' is-na') + '">' +
+            (AQ.hasPrice(l)
+              ? AQ.fmtNum(l.price) + ' <small>' + AQ.priceNote(l) + '</small>'
+              : 'السعر عند الاتصال') +
+          '</div>' +
           specBox(l) +
           (l.description ? '<p class="det__desc">' + AQ.esc(l.description) + '</p>' : '') +
           '<div class="det__actions">' +

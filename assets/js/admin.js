@@ -121,8 +121,11 @@
             statusBadge(l) +
           '</div>' +
         '</div>' +
-        '<div class="row__price">' + AQ.fmtNum(l.price) +
-          ' <small style="font-size:11px;color:var(--t-lo)">' + AQ.priceNote(l) + '</small></div>' +
+        '<div class="row__price">' +
+          (AQ.hasPrice(l)
+            ? AQ.fmtNum(l.price) + ' <small style="font-size:11px;color:var(--t-lo)">' + AQ.priceNote(l) + '</small>'
+            : '<small style="font-size:12.5px;color:var(--t-lo);font-weight:800">عند الاتصال</small>') +
+        '</div>' +
         '<div class="row__acts">' +
           '<button type="button" data-edit>تعديل</button>' +
           '<button type="button" class="is-del" data-del>حذف</button>' +
@@ -168,7 +171,7 @@
         title: '',
         type: 'rent',
         furnished: false,
-        price: '',
+        price: null,
         city: '',
         district: '',
         rooms: 3,
@@ -188,7 +191,7 @@
     var l = st.editing;
     $('#fTitle').value = l.title || '';
     $('#fType').value = l.type || 'rent';
-    $('#fPrice').value = l.price === '' || l.price === undefined ? '' : l.price;
+    $('#fPrice').value = (l.price === null || l.price === undefined || l.price === '') ? '' : l.price;
     $('#fCity').value = l.city || '';
     $('#fDistrict').value = l.district || '';
     $('#fRooms').value = l.rooms === undefined ? '' : l.rooms;
@@ -235,13 +238,14 @@
 
   function collect() {
     var title = $('#fTitle').value.trim();
-    var price = Number($('#fPrice').value);
+    var priceRaw = $('#fPrice').value.trim();
     var city = $('#fCity').value.trim();
     var ok = true;
 
     $('#fldTitle').classList.toggle('field--err', !title);
     if (!title) ok = false;
-    var priceOk = isFinite(price) && price > 0;
+    var price = priceRaw === '' ? null : Number(priceRaw);
+    var priceOk = priceRaw === '' || (isFinite(price) && price > 0);
     $('#fldPrice').classList.toggle('field--err', !priceOk);
     if (!priceOk) ok = false;
     $('#fldCity').classList.toggle('field--err', !city);
@@ -251,7 +255,7 @@
     var l = st.editing;
     l.title = title;
     l.type = $('#fType').value;
-    l.price = Math.round(price);
+    l.price = price === null ? null : Math.round(price);
     l.city = city;
     l.district = $('#fDistrict').value.trim();
     l.rooms = Math.max(0, parseInt($('#fRooms').value, 10) || 0);

@@ -123,6 +123,25 @@ window.LISTINGS_DATA = {
       "images": ["assets/listings/sample-1.svg"],
       "createdAt": 1710000006000,
       "updatedAt": 1710000006000
+    },
+    {
+      "id": "aq-1710000007-8810",
+      "ref": "A-1007",
+      "title": "شقة تمليك بإطلالة بحرية — العين السخنة",
+      "type": "sale",
+      "furnished": false,
+      "price": null,
+      "city": "السويس",
+      "district": "العين السخنة",
+      "rooms": 3,
+      "baths": 2,
+      "area": 160,
+      "floor": 5,
+      "status": "available",
+      "description": "شقة تمليك في كومباوند على البحر مباشرة، تشطيب كامل، السعر عند الاتصال ومرونة في شروط السداد.",
+      "images": ["assets/listings/sample-2.svg"],
+      "createdAt": 1710000007000,
+      "updatedAt": 1710000007000
     }
   ]
 };
