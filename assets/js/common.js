@@ -1,0 +1,419 @@
+/* ============================================================
+   AQARAT — Common helpers (shared by index + admin)
+   ============================================================ */
+(function (global) {
+  'use strict';
+
+  var Common = {};
+
+  /* ---------- data ---------- */
+  Common.getData = function () {
+    var d = global.LISTINGS_DATA;
+    if (!d || typeof d !== 'object') {
+      d = { updated: 0, settings: {}, listings: [] };
+    }
+    if (!Array.isArray(d.listings)) d.listings = [];
+    if (!d.settings || typeof d.settings !== 'object') d.settings = {};
+    return d;
+  };
+
+  /* ---------- escaping ---------- */
+  Common.esc = function (s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  /* ---------- numbers & price ---------- */
+  Common.fmtNum = function (n) {
+    n = Number(n);
+    if (!isFinite(n)) return '0';
+    return n.toLocaleString('en-US');
+  };
+
+  Common.priceNote = function (listing) {
+    return listing.type === 'rent' ? 'جنيه / شهر' : 'جنيه';
+  };
+
+  Common.priceLabel = function (listing) {
+    return Common.fmtNum(listing.price) + ' ' + Common.priceNote(listing);
+  };
+
+  /* ---------- labels ---------- */
+  Common.typeLabel = function (type) {
+    return type === 'rent' ? 'إيجار' : 'تمليك';
+  };
+
+  Common.statusLabel = function (status) {
+    return status === 'booked' ? 'محجوز'
+      : status === 'sold' ? 'تم البيع'
+      : 'متاح';
+  };
+
+  Common.roomsLabel = function (rooms) {
+    rooms = Number(rooms) || 0;
+    if (rooms <= 0) return 'استديو';
+    if (rooms === 1) return 'غرفة واحدة';
+    if (rooms === 2) return 'غرفتين';
+    if (rooms <= 10) return rooms + ' غرف';
+    return rooms + ' غرفة';
+  };
+
+  /* ---------- whatsapp ---------- */
+  /* normalizes any eg/intl number to wa.me format (no +, no 00) */
+  Common.waNumber = function (raw) {
+    var s = String(raw || '').replace(/[^0-9]/g, '');
+    if (!s) return '';
+    if (s.indexOf('00') === 0) s = s.slice(2);
+    if (s.length === 11 && s.charAt(0) === '0') s = '2' + s; /* 010... -> 2010... */
+    if (s.length === 10 && s.charAt(0) === '1') s = '2' + s; /* 10...  -> 2010... */
+    return s;
+  };
+
+  Common.waLink = function (rawNumber, text) {
+    var n = Common.waNumber(rawNumber);
+    var url = n ? 'https://wa.me/' + n : 'https://wa.me/';
+    if (text) url += '?text=' + encodeURIComponent(text);
+    return url;
+  };
+
+  Common.listingUrl = function (listing) {
+    try {
+      var base = location.origin && location.origin !== 'null'
+        ? location.origin + location.pathname
+        : '';
+      if (!base || location.protocol === 'file:') return '';
+      return base + '#' + encodeURIComponent(listing.ref || listing.id || '');
+    } catch (e) { return ''; }
+  };
+
+  Common.bookingMessage = function (listing, form) {
+    form = form || {};
+    var lines = [];
+    lines.push('السلام عليكم، عايز أحجز/أستفسر عن الشقة دي:');
+    lines.push('');
+    lines.push('🏠 ' + listing.title);
+    lines.push('📍 ' + (listing.city || '') + (listing.district ? ' — ' + listing.district : ''));
+    lines.push('💰 ' + Common.priceLabel(listing));
+    lines.push('🔖 النوع: ' + Common.typeLabel(listing.type) + (listing.furnished ? ' — مفروش' : ''));
+    lines.push('🔢 كود الشقة: ' + (listing.ref || '-'));
+    var link = Common.listingUrl(listing);
+    if (link) lines.push('🔗 ' + link);
+    if (form.name) { lines.push(''); lines.push('👤 الاسم: ' + form.name); }
+    if (form.phone) { lines.push('📱 التليفون: ' + form.phone); }
+    if (form.note) { lines.push('📝 ملاحظات: ' + form.note); }
+    lines.push('');
+    lines.push('(اتبعت من موقع ' + (Common.getData().settings.siteName || 'العقارات') + ')');
+    return lines.join('\n');
+  };
+
+  Common.openWhatsApp = function (number, text) {
+    var a = document.createElement('a');
+    a.href = Common.waLink(number, text);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { a.remove(); }, 600);
+  };
+
+  /* ---------- sha-256 (for admin password) ---------- */
+  Common.sha256 = function (str) {
+    if (global.crypto && global.crypto.subtle && global.crypto.subtle.digest) {
+      return global.crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(str)
+      ).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+      });
+    }
+    /* fallback: tiny synchronous sha256 (only if subtle unavailable, e.g. old http) */
+    return Promise.reject(new Error('crypto unavailable'));
+  };
+
+  /* ---------- base64 for utf-8 text / bytes ---------- */
+  Common.utf8ToBase64 = function (str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(bin);
+  };
+
+  Common.dataFileContent = function (data) {
+    return 'window.LISTINGS_DATA = ' + JSON.stringify(data, null, 2) + ';\n';
+  };
+
+  Common.parseDataFile = function (text) {
+    var m = String(text).match(/window\.LISTINGS_DATA\s*=\s*([\s\S]*?);?\s*$/);
+    if (!m) throw new Error('ملف البيانات غير صالح');
+    return JSON.parse(m[1]);
+  };
+
+  /* ---------- ids ---------- */
+  Common.newId = function () {
+    return 'aq-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000);
+  };
+
+  Common.newRef = function (listings) {
+    var max = 1000;
+    (listings || []).forEach(function (l) {
+      var m = String(l.ref || '').match(/(\d+)\s*$/);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'A-' + (max + 1);
+  };
+
+  /* ---------- storage ---------- */
+  Common.store = {
+    get: function (k, fb) {
+      try {
+        var v = localStorage.getItem('aq_' + k);
+        return v === null ? fb : JSON.parse(v);
+      } catch (e) { return fb; }
+    },
+    set: function (k, v) {
+      try { localStorage.setItem('aq_' + k, JSON.stringify(v)); } catch (e) {}
+    },
+    del: function (k) {
+      try { localStorage.removeItem('aq_' + k); } catch (e) {}
+    },
+    session: {
+      get: function (k, fb) {
+        try {
+          var v = sessionStorage.getItem('aq_' + k);
+          return v === null ? fb : JSON.parse(v);
+        } catch (e) { return fb; }
+      },
+      set: function (k, v) {
+        try { sessionStorage.setItem('aq_' + k, JSON.stringify(v)); } catch (e) {}
+      },
+      del: function (k) {
+        try { sessionStorage.removeItem('aq_' + k); } catch (e) {}
+      }
+    }
+  };
+
+  /* ---------- toasts ---------- */
+  Common.toast = function (msg, kind) {
+    var t = document.createElement('div');
+    t.className = 'toast toast--' + (kind || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('is-in'); });
+    setTimeout(function () {
+      t.classList.remove('is-in');
+      setTimeout(function () { t.remove(); }, 400);
+    }, 3400);
+  };
+
+  /* ---------- image resize (client side) ---------- */
+  Common.resizeImage = function (file, maxEdge, quality) {
+    maxEdge = maxEdge || 1400;
+    quality = quality || 0.8;
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('تعذّرت قراءة الصورة')); };
+      reader.onload = function () {
+        var img = new Image();
+        img.onerror = function () { reject(new Error('صورة غير صالحة')); };
+        img.onload = function () {
+          try {
+            var w = img.naturalWidth, h = img.naturalHeight;
+            var scale = Math.min(1, maxEdge / Math.max(w, h));
+            var cw = Math.max(1, Math.round(w * scale));
+            var ch = Math.max(1, Math.round(h * scale));
+            var canvas = document.createElement('canvas');
+            canvas.width = cw; canvas.height = ch;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.drawImage(img, 0, 0, cw, ch);
+            var dataUrl = canvas.toDataURL('image/jpeg', quality);
+            if (dataUrl.length > 1400000) {
+              dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            }
+            resolve(dataUrl);
+          } catch (e) { reject(e); }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  Common.dataUrlToBase64 = function (dataUrl) {
+    return String(dataUrl).split(',')[1] || '';
+  };
+
+  /* ---------- GitHub contents API ---------- */
+  Common.github = {
+    token: function () { return Common.store.get('git_token', ''); },
+    setToken: function (t) { Common.store.set('git_token', t || ''); },
+    repoInfo: function () {
+      var data = Common.getData().settings;
+      var owner = Common.store.get('git_owner', data.owner || '');
+      var repo = Common.store.get('git_repo', data.repo || '');
+      var branch = Common.store.get('git_branch', data.branch || 'main');
+      return { owner: owner, repo: repo, branch: branch };
+    },
+    setRepoInfo: function (info) {
+      Common.store.set('git_owner', info.owner || '');
+      Common.store.set('git_repo', info.repo || '');
+      Common.store.set('git_branch', info.branch || 'main');
+    },
+    connected: function () {
+      var r = Common.github.repoInfo();
+      return !!(Common.github.token() && r.owner && r.repo);
+    },
+    req: function (method, path, body) {
+      var token = Common.github.token();
+      if (!token) return Promise.reject(new Error('مفيش توكن GitHub محفوظ'));
+      var r = Common.github.repoInfo();
+      var url = 'https://api.github.com/repos/' +
+        encodeURIComponent(r.owner) + '/' + encodeURIComponent(r.repo) + path;
+      if (path.indexOf('/contents/') > -1) {
+        url += (path.indexOf('?') > -1 ? '&' : '?') + 'ref=' + encodeURIComponent(r.branch);
+      }
+      return fetch(url, {
+        method: method,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : undefined
+      }).then(function (res) {
+        if (res.status === 401) throw new Error('التوكن غير صحيح أو منتهي');
+        if (res.status === 403) throw new Error('التوكن مفيهوش صلاحية (لازم Contents: Read & Write)');
+        if (res.status === 404) {
+          var e404 = new Error('مش لاقي الريبو/الملف — اتأكد من اسم المستخدم والريبو');
+          e404.status = 404;
+          throw e404;
+        }
+        if (!res.ok) {
+          return res.json().catch(function () { return {}; }).then(function (j) {
+            var e = new Error('خطأ من GitHub: ' + (j.message || res.status));
+            e.status = res.status;
+            throw e;
+          });
+        }
+        return res.json();
+      });
+    },
+    getFile: function (path) {
+      return Common.github.req('GET', '/contents/' + path).catch(function (e) {
+        if (e && e.status === 404) return null;
+        throw e;
+      });
+    },
+    putFile: function (path, message, contentBase64, sha) {
+      var r = Common.github.repoInfo();
+      var url = 'https://api.github.com/repos/' +
+        encodeURIComponent(r.owner) + '/' + encodeURIComponent(r.repo) +
+        '/contents/' + path;
+      var token = Common.github.token();
+      if (!token) return Promise.reject(new Error('مفيش توكن GitHub محفوظ'));
+      var body = {
+        message: message,
+        content: contentBase64,
+        branch: r.branch
+      };
+      if (sha) body.sha = sha;
+      return fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }).then(function (res) {
+        if (res.status === 401) throw new Error('التوكن غير صحيح أو منتهي');
+        if (res.status === 403) throw new Error('التوكن مفيهوش صلاحية (لازم Contents: Read & Write)');
+        if (res.status === 404) throw new Error('مش لاقي الريبو/المسار — اتأكد من الإعدادات');
+        if (!res.ok) {
+          return res.json().catch(function () { return {}; }).then(function (j) {
+            throw new Error('خطأ من GitHub: ' + (j.message || res.status));
+          });
+        }
+        return res.json();
+      });
+    },
+    saveDataFile: function (data) {
+      var content = Common.utf8ToBase64(Common.dataFileContent(data));
+      return Common.github.getFile('data/listings.js').then(function (f) {
+        return Common.github.putFile(
+          'data/listings.js',
+          'chore: تحديث بيانات الموقع ' + new Date().toISOString().slice(0, 19).replace('T', ' '),
+          content,
+          f ? f.sha : null
+        );
+      });
+    },
+    saveImage: function (fileName, base64) {
+      return Common.github.getFile('assets/listings/' + fileName).then(function (f) {
+        return Common.github.putFile(
+          'assets/listings/' + fileName,
+          'img: إضافة صورة ' + fileName,
+          base64,
+          f ? f.sha : null
+        );
+      });
+    },
+    deleteFile: function (path) {
+      var r = Common.github.repoInfo();
+      var token = Common.github.token();
+      if (!token) return Promise.resolve();
+      return Common.github.getFile(path).then(function (f) {
+        if (!f) return null;
+        return fetch('https://api.github.com/repos/' +
+          encodeURIComponent(r.owner) + '/' + encodeURIComponent(r.repo) +
+          '/contents/' + path, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Accept': 'application/vnd.github+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: 'chore: حذف ' + path,
+              sha: f.sha,
+              branch: r.branch
+            })
+          });
+      }).catch(function () { /* best effort */ });
+    },
+    test: function () {
+      var r = Common.github.repoInfo();
+      if (!r.owner || !r.repo) return Promise.reject(new Error('اكتب اسم المستخدم والريبو الأول'));
+      if (!Common.github.token()) return Promise.reject(new Error('اكتب التوكن الأول'));
+      return Common.github.req('GET', '');
+    }
+  };
+
+  /* ---------- placeholder image ---------- */
+  Common.placeholder = function (title) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560" viewBox="0 0 800 560">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#E7E5E4"/><stop offset="1" stop-color="#D6D3D1"/>' +
+      '</linearGradient></defs><rect width="800" height="560" fill="url(#g)"/>' +
+      '<g fill="none" stroke="#A8A29E" stroke-width="6">' +
+      '<path d="M400 160 L560 290 L560 440 L240 440 L240 290 Z"/>' +
+      '<path d="M340 440 L340 330 L460 330 L460 440"/>' +
+      '<path d="M280 300 L340 300 M460 300 L520 300"/>' +
+      '</g></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  };
+
+  global.AQ = Common;
+})(window);

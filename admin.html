@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة التحكم — عقاراتي</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+
+<header class="ahdr">
+  <div class="wrap ahdr__in">
+    <a class="brand" href="admin.html">
+      <span class="brand__mark">ع</span>
+      <span>لوحة التحكم<small class="brand__sub" id="ahBrand">عقاراتي</small></span>
+    </a>
+    <div class="ahdr__acts">
+      <a href="index.html" target="_blank" rel="noopener">👁 عرض الموقع</a>
+      <button type="button" id="btnLogout" hidden>خروج</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ LOGIN ============ -->
+<section class="login" id="loginView">
+  <div class="login__card">
+    <div class="brand__mark">ع</div>
+    <h1>لوحة التحكم</h1>
+    <p>اكتب كلمة السر عشان تضيف أو تعدل الشقق</p>
+    <form id="loginForm" novalidate>
+      <div class="field" id="fldLogin">
+        <label for="loginPass">كلمة السر</label>
+        <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" autofocus>
+        <div class="err-msg">كلمة السر غير صحيحة</div>
+      </div>
+      <button class="btn btn--dark" type="submit">دخول</button>
+    </form>
+    <div class="login__hint">
+      كلمة السر الافتراضية: <code>admin123</code><br>
+      غيّرها من تبويب «الإعدادات» بعد أول دخول.
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="appView" hidden>
+  <div class="wrap">
+    <nav class="tabs">
+      <button type="button" class="is-on" data-tab="listings">🏢 الشقق</button>
+      <button type="button" data-tab="settings">⚙️ الإعدادات</button>
+      <span class="tabs__sp"></span>
+      <span class="conn" id="connBadge">غير متصل بـ GitHub</span>
+    </nav>
+
+    <!-- ---------- listings ---------- -->
+    <section id="tabListings">
+      <div class="atb">
+        <input type="search" id="aSearch" placeholder="ابحث في الشقق بالاسم أو الكود…">
+        <button class="btn btn--ghost" type="button" id="btnSync">🔄 جلب أحدث نسخة</button>
+        <button class="btn btn--dark" type="button" id="btnNew">+ إضافة شقة</button>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+
+    <!-- ---------- form ---------- -->
+    <section id="tabForm" hidden>
+      <div class="atb">
+        <button class="btn btn--ghost" type="button" id="btnBack">→ رجوع للشقق</button>
+        <strong id="formTitle" style="font-size:17px;font-weight:900">إضافة شقة جديدة</strong>
+      </div>
+
+      <div class="card-box">
+        <h3>بيانات الشقة</h3>
+        <div class="sub">الحقول اللي عليها * إلزامية</div>
+        <div class="fgrid">
+          <div class="field full" id="fldTitle">
+            <label for="fTitle">عنوان الشقة *</label>
+            <input id="fTitle" type="text" placeholder="مثال: شقة 3 غرف بإطلالة مفتوحة — التجمع الخامس">
+            <div class="err-msg">اكتب عنوان للشقة</div>
+          </div>
+          <div class="field">
+            <label for="fType">نوع العرض *</label>
+            <select id="fType">
+              <option value="rent">إيجار</option>
+              <option value="sale">تمليك</option>
+            </select>
+          </div>
+          <div class="field" id="fldPrice">
+            <label for="fPrice">السعر بالجنيه * <span id="priceHint">(شهري)</span></label>
+            <input id="fPrice" type="number" min="0" step="100" inputmode="numeric" placeholder="12000">
+            <div class="err-msg">اكتب سعر صحيح</div>
+          </div>
+          <div class="field" id="fldCity">
+            <label for="fCity">المحافظة / المدينة *</label>
+            <input id="fCity" type="text" list="cityList" placeholder="القاهرة">
+            <datalist id="cityList"></datalist>
+            <div class="err-msg">اكتب المدينة</div>
+          </div>
+          <div class="field">
+            <label for="fDistrict">الحي / المنطقة</label>
+            <input id="fDistrict" type="text" placeholder="التجمع الخامس">
+          </div>
+          <div class="field">
+            <label for="fRooms">غرف النوم (0 = استديو)</label>
+            <input id="fRooms" type="number" min="0" max="20" step="1" placeholder="3">
+          </div>
+          <div class="field">
+            <label for="fBaths">الحمامات</label>
+            <input id="fBaths" type="number" min="0" max="20" step="1" placeholder="2">
+          </div>
+          <div class="field">
+            <label for="fArea">المساحة (متر²)</label>
+            <input id="fArea" type="number" min="0" step="1" placeholder="145">
+          </div>
+          <div class="field">
+            <label for="fFloor">الدور</label>
+            <input id="fFloor" type="number" min="-5" max="50" step="1" placeholder="4">
+          </div>
+          <div class="field full">
+            <label for="fStatus">حالة العرض</label>
+            <select id="fStatus">
+              <option value="available">متاح</option>
+              <option value="booked">محجوز</option>
+              <option value="sold">تم البيع</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="fDesc">وصف الشقة</label>
+            <textarea id="fDesc" rows="4" placeholder="التشطيبات، الخدمات، إطلالة، مميزات المكان…"></textarea>
+          </div>
+          <div class="full checks">
+            <label><input type="checkbox" id="fFurn"> 🪑 شقة مفروشة</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>صور الشقة</h3>
+        <div class="sub">ارفع صور من الجهاز (الصورة الأولى هي صورة الغلاف) أو الصق رابط صورة</div>
+        <div class="imgs" id="imgs"></div>
+        <div class="uploader">
+          <label class="btn btn--ghost" for="fFiles">📎 اختر صور</label>
+          <input type="file" id="fFiles" accept="image/*" multiple>
+          <div class="url-add">
+            <input type="url" id="fUrl" placeholder="https://example.com/photo.jpg">
+            <button class="btn btn--ghost" type="button" id="btnAddUrl">إضافة الرابط</button>
+          </div>
+        </div>
+        <p class="up-note">الصور بتتكبس تلقائياً قبل الرفع (حتى يفضل الموقع خفيف). مسموح JPG وPNG وWEBP.</p>
+      </div>
+
+      <div class="factions">
+        <button class="btn btn--dark" type="button" id="btnSave">💾 حفظ ونشر</button>
+        <button class="btn btn--ghost" type="button" id="btnSaveLocal">💾 حفظ + تنزيل الملف</button>
+        <span class="sp"></span>
+        <button class="btn btn--ghost" type="button" id="btnCancel">إلغاء</button>
+      </div>
+    </section>
+
+    <!-- ---------- settings ---------- -->
+    <section id="tabSettings" hidden>
+      <div class="sgrid">
+        <div class="card-box">
+          <h3>إعدادات الموقع</h3>
+          <div class="sub">الاسم اللي بيظهر في الهيدر والفوتر</div>
+          <div class="fgrid">
+            <div class="field full">
+              <label for="sName">اسم الموقع</label>
+              <input id="sName" type="text" placeholder="عقاراتي">
+            </div>
+            <div class="field full">
+              <label for="sTag">الوصف / الشعار</label>
+              <input id="sTag" type="text" placeholder="إيجار وتمليك — شقق مختارة بعناية">
+            </div>
+            <div class="field full" id="fldWa">
+              <label for="sWa">رقم واتساب الطلبات *</label>
+              <input id="sWa" type="tel" inputmode="numeric" placeholder="01028960555" style="direction:ltr;text-align:left">
+              <div class="hint">بيتحول أوتوماتيك لصيغة دولية. الطلبات هتوصل عليه.</div>
+              <div class="err-msg">اكتب رقم موبايل صحيح</div>
+            </div>
+          </div>
+          <div class="sactions">
+            <button class="btn btn--dark" type="button" id="btnSaveSettings">💾 حفظ الإعدادات</button>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <h3>كلمة السر</h3>
+          <div class="sub">غيّرها من هنا — محدش يقدر يدخل لوحة التحكم من غيرها</div>
+          <div class="fgrid">
+            <div class="field full" id="fldNewPass">
+              <label for="sPass">كلمة السر الجديدة</label>
+              <input id="sPass" type="text" placeholder="اكتب كلمة سر قوية">
+              <div class="err-msg">كلمة السر قصيرة (6 حروف على الأقل)</div>
+            </div>
+            <div class="field full">
+              <label for="sPass2">تأكيد كلمة السر</label>
+              <input id="sPass2" type="text" placeholder="اكتبها تاني">
+              <div class="err-msg">الكلمتين مش متطابقتين</div>
+            </div>
+          </div>
+          <div class="sactions">
+            <button class="btn btn--dark" type="button" id="btnPass">🔑 تغيير كلمة السر</button>
+          </div>
+        </div>
+
+        <div class="card-box full">
+          <h3>الاتصال بـ GitHub (النشر التلقائي)</h3>
+          <div class="sub">لما تكون متصل، أي حفظ بيتعمل commit على الريبو والصفحة بتتحدث أوتوماتيك في دقيقة</div>
+          <div class="fgrid">
+            <div class="field">
+              <label for="gOwner">اسم مستخدم GitHub</label>
+              <input id="gOwner" type="text" placeholder="your-username" style="direction:ltr;text-align:left">
+            </div>
+            <div class="field">
+              <label for="gRepo">اسم الريبو</label>
+              <input id="gRepo" type="text" placeholder="aqarat-site" style="direction:ltr;text-align:left">
+            </div>
+            <div class="field">
+              <label for="gBranch">الفرع (Branch)</label>
+              <input id="gBranch" type="text" placeholder="main" style="direction:ltr;text-align:left">
+            </div>
+            <div class="field">
+              <label for="gToken">Personal Access Token</label>
+              <input id="gToken" class="tok" type="password" placeholder="ghp_… أو github_pat_…" autocomplete="off">
+              <div class="hint">بيتخزن في المتصفح بتاعك بس — مش بيتنشر على الموقع أبداً.</div>
+            </div>
+          </div>
+          <div class="sactions">
+            <button class="btn btn--dark" type="button" id="btnGitSave">💾 حفظ الاتصال</button>
+            <button class="btn btn--ghost" type="button" id="btnGitTest">🧪 اختبار الاتصال</button>
+            <button class="btn btn--ghost" type="button" id="btnGitForget">مسح التوكن</button>
+          </div>
+          <div class="help">
+            <b>عملية التوكن مرة واحدة (5 دقايق):</b>
+            <ol>
+              <li>افتح <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a></li>
+              <li>دوّس <code>Generate new token (classic)</code></li>
+              <li>حدد صلاحية <code>repo</code> واضغط <code>Generate</code></li>
+              <li>انسخ التوكن والصقه فوق واكتب اسمك واسم الريبو</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card-box full">
+          <h3>نسخ احتياطي</h3>
+          <div class="sub">لو مش عايز تربط GitHub — عدّل هنا، وبعدها نزّل الملف واستبدله في الريبو بإيدك</div>
+          <div class="sactions">
+            <button class="btn btn--ghost" type="button" id="btnDownload">⬇️ تنزيل ملف listings.js</button>
+            <button class="btn btn--ghost" type="button" id="btnUploadData">⬆️ استيراد ملف listings.js</button>
+            <input type="file" id="fDataFile" accept=".js,application/javascript,text/javascript" hidden>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="prog" id="prog"></div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+(function(){
+  var s = document.createElement('script');
+  s.src = 'data/listings.js?t=' + Date.now();
+  s.onload = function(){ window.Admin.boot(); };
+  s.onerror = function(){ window.Admin.boot(); };
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
