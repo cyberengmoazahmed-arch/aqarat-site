@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791446997190,
+  "updated": 1791447076762,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -154,12 +154,10 @@ window.LISTINGS_DATA = {
       "images": [
         "assets/listings/aq-1710000007-8810-2.jpg",
         "assets/listings/aq-1710000007-8810-2.jpg",
-        "assets/listings/aq-1710000007-8810-3.jpg",
-        "assets/listings/aq-1710000007-8810-4.jpg",
-        "assets/listings/aq-1710000007-8810-5.jpg"
+        "assets/listings/aq-1710000007-8810-3.jpg"
       ],
       "createdAt": 1710000007000,
-      "updatedAt": 1791446989910
+      "updatedAt": 1791447073073
     }
   ]
 };
