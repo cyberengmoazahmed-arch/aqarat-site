@@ -1,11 +1,11 @@
 window.LISTINGS_DATA = {
-  "updated": 1770000000000,
+  "updated": 1791446268110,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
     "whatsapp": "201028960555",
-    "owner": "",
-    "repo": "",
+    "owner": "cyberengmoazahmed-arch",
+    "repo": "aqarat-site",
     "branch": "main"
   },
   "listings": [
@@ -24,7 +24,10 @@ window.LISTINGS_DATA = {
       "floor": 4,
       "status": "available",
       "description": "شقة مفروشة بالكامل في كومباوند هادي، الدور الرابع مع مصعد، تشطيب سوبر لوكس، مطبخ راكب، تكييفات سيراميك، أمن وحراسة 24 ساعة، قريبة من الجامعة الأمريكية والمستشفيات.",
-      "images": ["assets/listings/sample-1.svg", "assets/listings/sample-2.svg"],
+      "images": [
+        "assets/listings/sample-1.svg",
+        "assets/listings/sample-2.svg"
+      ],
       "createdAt": 1710000001000,
       "updatedAt": 1710000001000
     },
@@ -43,7 +46,9 @@ window.LISTINGS_DATA = {
       "floor": 2,
       "status": "available",
       "description": "شقة تمليك فيللا تاون، تشطيب حديث، رهن بنكي متاح، تطل على حدائق مفتوحة، سنوات سداد عبر البنوك، مساحة110 متر + تراس 15 متر.",
-      "images": ["assets/listings/sample-3.svg"],
+      "images": [
+        "assets/listings/sample-3.svg"
+      ],
       "createdAt": 1710000002000,
       "updatedAt": 1710000002000
     },
@@ -62,7 +67,9 @@ window.LISTINGS_DATA = {
       "floor": 6,
       "status": "booked",
       "description": "شقة مفروشة بالكامل بالقرب من ميدان هليوبوليس، الدور السادس مع مصعد، إطلالة على شارع عرض، تكييفات ومطبخ أجهزة كهربائية كاملة، مواقف سيارات.",
-      "images": ["assets/listings/sample-4.svg"],
+      "images": [
+        "assets/listings/sample-4.svg"
+      ],
       "createdAt": 1710000003000,
       "updatedAt": 1710000003000
     },
@@ -81,7 +88,9 @@ window.LISTINGS_DATA = {
       "floor": 0,
       "status": "available",
       "description": "دوبلكس على شاطئ البحر مباشرة، حديقة خاصة 80 متر، تشطيب كامل، تطل على مسبح مشترك، كمبوند متكامل الخدمات على مسافة 300 متر من الشاطئ.",
-      "images": ["assets/listings/sample-5.svg"],
+      "images": [
+        "assets/listings/sample-5.svg"
+      ],
       "createdAt": 1710000004000,
       "updatedAt": 1710000004000
     },
@@ -100,7 +109,9 @@ window.LISTINGS_DATA = {
       "floor": 3,
       "status": "available",
       "description": "شقة واسعة في شارع هدي عمارة راقية، 4 غرف نوم منهم ماستر، ريسبشن كبير، مطبخ أمريكي، عزبة مستقلة، قريبة من شارع جامعة الدول والمترو.",
-      "images": ["assets/listings/sample-6.svg"],
+      "images": [
+        "assets/listings/sample-6.svg"
+      ],
       "createdAt": 1710000005000,
       "updatedAt": 1710000005000
     },
@@ -119,7 +130,9 @@ window.LISTINGS_DATA = {
       "floor": 2,
       "status": "available",
       "description": "استديو مفروش بالكامل في عمارة تاريخية مجددة، قريب من شارع طلعت حرب والمترو، مناسب للسكن الفردي أو المكاتب الصغيرة، إنترنت جاهز.",
-      "images": ["assets/listings/sample-1.svg"],
+      "images": [
+        "assets/listings/sample-1.svg"
+      ],
       "createdAt": 1710000006000,
       "updatedAt": 1710000006000
     },
@@ -138,9 +151,12 @@ window.LISTINGS_DATA = {
       "floor": 5,
       "status": "available",
       "description": "شقة تمليك في كومباوند على البحر مباشرة، تشطيب كامل، السعر عند الاتصال ومرونة في شروط السداد.",
-      "images": ["assets/listings/sample-2.svg"],
+      "images": [
+        "assets/listings/sample-2.svg",
+        "assets/listings/aq-1710000007-8810-2.jpg"
+      ],
       "createdAt": 1710000007000,
-      "updatedAt": 1710000007000
+      "updatedAt": 1791446266409
     }
   ]
 };
