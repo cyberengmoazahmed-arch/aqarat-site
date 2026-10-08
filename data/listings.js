@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791446370457,
+  "updated": 1791446997190,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -152,11 +152,14 @@ window.LISTINGS_DATA = {
       "status": "available",
       "description": "شقة تمليك في كومباوند على البحر مباشرة، تشطيب كامل، السعر عند الاتصال ومرونة في شروط السداد.",
       "images": [
-        "assets/listings/sample-2.svg",
-        "assets/listings/aq-1710000007-8810-2.jpg"
+        "assets/listings/aq-1710000007-8810-2.jpg",
+        "assets/listings/aq-1710000007-8810-2.jpg",
+        "assets/listings/aq-1710000007-8810-3.jpg",
+        "assets/listings/aq-1710000007-8810-4.jpg",
+        "assets/listings/aq-1710000007-8810-5.jpg"
       ],
       "createdAt": 1710000007000,
-      "updatedAt": 1791446266409
+      "updatedAt": 1791446989910
     }
   ]
 };
