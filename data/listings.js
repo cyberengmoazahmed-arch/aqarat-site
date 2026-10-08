@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791446268110,
+  "updated": 1791446370457,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -121,7 +121,7 @@ window.LISTINGS_DATA = {
       "title": "استديو مفروش — وسط البلد",
       "type": "rent",
       "furnished": true,
-      "price": 4500,
+      "price": 900000000,
       "city": "القاهرة",
       "district": "وسط البلد",
       "rooms": 0,
@@ -134,7 +134,7 @@ window.LISTINGS_DATA = {
         "assets/listings/sample-1.svg"
       ],
       "createdAt": 1710000006000,
-      "updatedAt": 1710000006000
+      "updatedAt": 1791446370457
     },
     {
       "id": "aq-1710000007-8810",
