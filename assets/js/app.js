@@ -14,22 +14,23 @@
   /* ---------- helpers ---------- */
   function $(s, r) { return (r || document).querySelector(s); }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function t(key, fallback) { return AQ.t(key, fallback); }
 
   function applySettings() {
     var s = AQ.getData().settings;
     var name = s.siteName || 'عقاراتي';
     var tag = s.tagline || 'إيجار وتمليك — شقق مختارة بعناية';
-    document.title = name + ' — إيجار وتمليك | شقق مختارة بعناية';
+    document.title = name + ' — ' + t('title_tail', 'إيجار وتمليك | شقق مختارة بعناية');
     $('#brandName').textContent = name;
     $('#ftrName').textContent = name;
     $('#ftrName2').textContent = name;
     $('#brandMark').textContent = name.trim().charAt(0) || 'ع';
     $('#brandSub').textContent = tag.split('—')[0].trim();
-    $('#ftrAbout').textContent = tag + ' — الحجز برسالة واتساب واحدة مباشرة.';
+    $('#ftrAbout').textContent = tag + t('ftr_suffix', ' — الحجز برسالة واتساب واحدة مباشرة.');
     $('#heroTagline').textContent =
-      'اختار الشقة اللي عاجباك، دوس «احجز»، والرسالة هتوصل على واتساب على طول بكل التفاصيل.';
+      t('hero_tagline', 'اختار الشقة اللي عاجباك، دوس «احجز»، والرسالة هتوصل على واتساب على طول بكل التفاصيل.');
 
-    var wa = AQ.waLink(s.whatsapp, 'السلام عليكم، حابب أستفسر عن الشقق الموجودة على الموقع.');
+    var wa = AQ.waLink(s.whatsapp, t('wa_greet', 'السلام عليكم، حابب أستفسر عن الشقق الموجودة على الموقع.'));
     ['#hdrWa', '#navWa', '#ftrWa', '#fabWa'].forEach(function (sel) {
       var el = $(sel); if (el) el.href = wa;
     });
@@ -44,6 +45,9 @@
 
     var citySel = $('#fCity');
     var cur = citySel.value;
+    Array.prototype.slice.call(citySel.options).forEach(function (o) {
+      if (o.value !== 'all') o.remove();
+    });
     Object.keys(cities).sort(function (a, b) { return a.localeCompare(b, 'ar'); }).forEach(function (c) {
       var o = document.createElement('option');
       o.value = c; o.textContent = c;
@@ -105,69 +109,102 @@
 
   /* ---------- rendering ---------- */
   function statusBadge(l) {
-    if (l.status === 'booked') return '<span class="badge badge--warn">محجوز</span>';
-    if (l.status === 'sold') return '<span class="badge badge--off">تم البيع</span>';
-    return '<span class="badge badge--ok">متاح</span>';
+    if (l.status === 'booked') return '<span class="badge badge--warn">' + t('status_booked', 'محجوز') + '</span>';
+    if (l.status === 'sold') return '<span class="badge badge--off">' + t('status_sold', 'تم البيع') + '</span>';
+    return '<span class="badge badge--ok">' + t('status_available', 'متاح') + '</span>';
   }
 
-  function cardImg(l) {
-    var src = (l.images && l.images[0]) || '';
-    if (!src) src = AQ.placeholder(l.title);
-    return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(l.title) + '" loading="lazy">';
+  function cardSlides(l) {
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
+    return '<div class="card__slides">' + imgs.map(function (src, i) {
+      return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(l.title) + '" loading="lazy"' +
+        (i === 0 ? ' class="is-on"' : '') + '>';
+    }).join('') + '</div>';
   }
 
   function cardHTML(l) {
     var chips = '';
     chips += '<span class="chip">🛏 ' + AQ.esc(AQ.roomsLabel(l.rooms)) + '</span>';
-    chips += '<span class="chip">🚿 ' + (l.baths || 0) + ' حمام</span>';
-    if (l.area) chips += '<span class="chip">📐 ' + l.area + ' م²</span>';
-    if (l.furnished) chips += '<span class="chip">🪑 مفروش</span>';
+    chips += '<span class="chip">🚿 ' + (l.baths || 0) + ' ' + t('label_baths', 'حمام') + '</span>';
+    if (l.area) chips += '<span class="chip">📐 ' + l.area + ' ' + t('label_area_unit', 'م²') + '</span>';
+    if (l.furnished) chips += '<span class="chip">🪑 ' + t('label_furn_chip', 'مفروش') + '</span>';
 
     return '' +
       '<article class="card" data-id="' + AQ.esc(l.id) + '">' +
         '<div class="card__media" data-open="' + AQ.esc(l.id) + '">' +
-          cardImg(l) +
+          cardSlides(l) +
           '<div class="card__badges">' +
             '<span class="badge badge--type">' + AQ.typeLabel(l.type) + '</span>' +
             statusBadge(l) +
           '</div>' +
-          ((l.images && l.images.length > 1) ? '<span class="card__count">📷 ' + l.images.length + ' صور</span>' : '') +
+          ((l.images && l.images.length > 1)
+            ? '<span class="card__count">📷 1/' + l.images.length + '</span>' : '') +
         '</div>' +
         '<div class="card__body">' +
-          '<div class="card__ref">كود ' + AQ.esc(l.ref) + '</div>' +
+          '<div class="card__ref">' + t('label_code', 'كود') + ' ' + AQ.esc(l.ref) + '</div>' +
           '<h3 class="card__title" data-open="' + AQ.esc(l.id) + '">' + AQ.esc(l.title) + '</h3>' +
           '<div class="card__loc">📍 ' + AQ.esc(l.city || '') + (l.district ? ' — ' + AQ.esc(l.district) : '') + '</div>' +
           '<div class="card__chips">' + chips + '</div>' +
           '<div class="card__price">' +
           (AQ.hasPrice(l)
             ? '<b>' + AQ.fmtNum(l.price) + '</b><span>' + AQ.priceNote(l) + '</span>'
-            : '<b class="is-na">السعر عند الاتصال</b>') +
+            : '<b class="is-na">' + t('price_on_call', 'السعر عند الاتصال') + '</b>') +
         '</div>' +
           '<div class="card__actions">' +
-            '<button class="btn btn--dark" data-book="' + AQ.esc(l.id) + '">احجز الآن</button>' +
-            '<button class="btn btn--ghost btn--icon" data-open="' + AQ.esc(l.id) + '" aria-label="تفاصيل">التفاصيل</button>' +
+            '<button class="btn btn--dark" data-book="' + AQ.esc(l.id) + '">' + t('book_now', 'احجز الآن') + '</button>' +
+            '<button class="btn btn--ghost btn--icon" data-open="' + AQ.esc(l.id) + '" aria-label="' + t('aria_details', 'تفاصيل') + '">' + t('details_btn', 'التفاصيل') + '</button>' +
           '</div>' +
         '</div>' +
       '</article>';
   }
 
+  function resLabel(n) {
+    if (n === 1) return t('res_one', 'شقة مطابقة');
+    if (n === 2) return t('res_two', 'شققتان مطابقتان');
+    if (n >= 3 && n <= 10) return t('res_few', 'شقق مطابقة');
+    return t('res_many', 'شقة مطابقة');
+  }
+
   function render() {
     var list = filtered();
     var grid = $('#grid');
+    $$('.card__media', grid).forEach(stopSlides);
     $('#resCount').textContent = list.length;
-    $('#resLabel').textContent = list.length === 1 ? 'شقة مطابقة'
-      : list.length === 2 ? 'شققتان مطابقتان'
-      : list.length >= 3 && list.length <= 10 ? 'شقق مطابقة' : 'شقة مطابقة';
+    $('#resLabel').textContent = resLabel(list.length);
 
     if (!list.length) {
       grid.innerHTML =
         '<div class="empty">' +
-          '<b>مفيش شقق مطابقة للفلاتر دي</b>' +
-          '<p>جرّب تغيّر نوع العرض أو المدينة أو تمسح الفلاتر.</p>' +
+          '<b>' + t('empty_b', 'مفيش شقق مطابقة للفلاتر دي') + '</b>' +
+          '<p>' + t('empty_p', 'جرّب تغيّر نوع العرض أو المدينة أو تمسح الفلاتر.') + '</p>' +
         '</div>';
       return;
     }
     grid.innerHTML = list.map(cardHTML).join('');
+  }
+
+  /* ---------- card hover slideshow ---------- */
+  function startSlides(media) {
+    if (media._aqTimer) return;
+    var imgs = $$('.card__slides img', media);
+    if (imgs.length < 2) return;
+    var i = 0;
+    media._aqTimer = setInterval(function () {
+      imgs[i].classList.remove('is-on');
+      i = (i + 1) % imgs.length;
+      imgs[i].classList.add('is-on');
+      var c = $('.card__count', media);
+      if (c) c.textContent = '📷 ' + (i + 1) + '/' + imgs.length;
+    }, 1300);
+  }
+
+  function stopSlides(media) {
+    if (!media) return;
+    if (media._aqTimer) { clearInterval(media._aqTimer); media._aqTimer = null; }
+    var imgs = $$('.card__slides img', media);
+    imgs.forEach(function (im, i) { im.classList.toggle('is-on', i === 0); });
+    var c = $('.card__count', media);
+    if (c && imgs.length > 1) c.textContent = '📷 1/' + imgs.length;
   }
 
   /* ---------- detail modal ---------- */
@@ -177,12 +214,13 @@
     var thumbs = imgs.length > 1
       ? '<div class="det__thumbs">' + imgs.map(function (src, i) {
           return '<img src="' + AQ.esc(src) + '" data-thumb="' + i + '" class="' +
-            (i === state.gallery ? 'is-on' : '') + '" alt="صورة ' + (i + 1) + '">';
+            (i === state.gallery ? 'is-on' : '') + '" alt="' + t('gallery_img', 'صورة') + ' ' + (i + 1) + '">';
         }).join('') + '</div>'
       : '';
+    var rtl = document.documentElement.dir !== 'ltr';
     var nav = imgs.length > 1
-      ? '<button class="det__nav det__nav--prev" data-gnav="-1" aria-label="السابق">›</button>' +
-        '<button class="det__nav det__nav--next" data-gnav="1" aria-label="التالي">‹</button>'
+      ? '<button class="det__nav det__nav--prev" data-gnav="-1" aria-label="' + t('gallery_prev', 'السابق') + '">' + (rtl ? '›' : '‹') + '</button>' +
+        '<button class="det__nav det__nav--next" data-gnav="1" aria-label="' + t('gallery_next', 'التالي') + '">' + (rtl ? '‹' : '›') + '</button>'
       : '';
     return '<div class="det__media">' +
       '<div class="det__main"><img id="detMain" src="' + AQ.esc(main) + '" alt="' + AQ.esc(l.title) + '"></div>' +
@@ -191,48 +229,49 @@
 
   function specBox(l) {
     return '<div class="det__specs">' +
-      '<div class="spec"><span>النوع</span><b>' + AQ.typeLabel(l.type) + (l.furnished ? ' — مفروش' : '') + '</b></div>' +
-      '<div class="spec"><span>المساحة</span><b>' + (l.area ? l.area + ' متر' : '—') + '</b></div>' +
-      '<div class="spec"><span>غرف النوم</span><b>' + AQ.esc(AQ.roomsLabel(l.rooms)) + '</b></div>' +
-      '<div class="spec"><span>الحمامات</span><b>' + (l.baths || 0) + '</b></div>' +
-      '<div class="spec"><span>الدور</span><b>' + (l.floor ? (l.floor === 0 ? 'أرضي' : l.floor) : '—') + '</b></div>' +
-      '<div class="spec"><span>الكود</span><b>' + AQ.esc(l.ref) + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_type', 'النوع') + '</span><b>' + AQ.typeLabel(l.type) +
+        (l.furnished ? t('furn_suffix', ' — مفروش') : '') + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_area', 'المساحة') + '</span><b>' + (l.area ? l.area + ' ' + t('unit_m', 'متر') : '—') + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_rooms', 'غرف النوم') + '</span><b>' + AQ.esc(AQ.roomsLabel(l.rooms)) + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_baths', 'الحمامات') + '</span><b>' + (l.baths || 0) + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_floor', 'الدور') + '</span><b>' + (l.floor ? (l.floor === 0 ? t('floor_ground', 'أرضي') : l.floor) : '—') + '</b></div>' +
+      '<div class="spec"><span>' + t('spec_code', 'الكود') + '</span><b>' + AQ.esc(l.ref) + '</b></div>' +
       '</div>';
   }
 
   function bookingFormHTML() {
     return '' +
       '<form class="bform" id="bookForm" novalidate>' +
-        '<h4>📩 احجز أو استفسر — الرسالة هتروح على واتساب</h4>' +
+        '<h4>' + t('bform_title', '📩 احجز أو استفسر — الرسالة هتروح على واتساب') + '</h4>' +
         '<div class="row">' +
           '<div class="field" id="fldName">' +
-            '<label for="bkName">الاسم *</label>' +
-            '<input id="bkName" name="name" type="text" placeholder="اسمك بالكامل" autocomplete="name">' +
-            '<div class="err-msg">اكتب اسمك من فضلك</div>' +
+            '<label for="bkName">' + t('label_name', 'الاسم *') + '</label>' +
+            '<input id="bkName" name="name" type="text" placeholder="' + t('ph_name', 'اسمك بالكامل') + '" autocomplete="name">' +
+            '<div class="err-msg">' + t('err_name', 'اكتب اسمك من فضلك') + '</div>' +
           '</div>' +
           '<div class="field" id="fldPhone">' +
-            '<label for="bkPhone">رقم التليفون *</label>' +
+            '<label for="bkPhone">' + t('label_phone', 'رقم التليفون *') + '</label>' +
             '<input id="bkPhone" name="phone" type="tel" inputmode="numeric" placeholder="01xxxxxxxxx" autocomplete="tel">' +
-            '<div class="err-msg">اكتب رقم موبايل صحيح مكوّن من 11 رقم</div>' +
+            '<div class="err-msg">' + t('err_phone', 'اكتب رقم موبايل صحيح مكوّن من 11 رقم') + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="field">' +
-          '<label for="bkNote">ملاحظات (اختياري)</label>' +
-          '<textarea id="bkNote" name="note" placeholder="مثال: مهتم بالمعاينة يوم الخميس مساءً…"></textarea>' +
+          '<label for="bkNote">' + t('label_note', 'ملاحظات (اختياري)') + '</label>' +
+          '<textarea id="bkNote" name="note" placeholder="' + t('ph_note', 'مثال: مهتم بالمعاينة يوم الخميس مساءً…') + '"></textarea>' +
         '</div>' +
-        '<button class="btn btn--wa" type="submit">إرسال الحجز على الواتساب</button>' +
+        '<button class="btn btn--wa" type="submit">' + t('submit_booking', 'إرسال الحجز على الواتساب') + '</button>' +
       '</form>';
   }
 
   function detailHTML(l) {
     return '' +
-      '<button class="modal__close" data-close aria-label="إغلاق">✕</button>' +
+      '<button class="modal__close" data-close aria-label="' + t('aria_close', 'إغلاق') + '">✕</button>' +
       '<div class="det">' +
         galleryHTML(l) +
         '<div class="det__info">' +
           '<div class="det__badges">' +
             '<span class="badge badge--type">' + AQ.typeLabel(l.type) + '</span>' +
-            (l.furnished ? '<span class="badge badge--furn">مفروش</span>' : '') +
+            (l.furnished ? '<span class="badge badge--furn">' + t('label_furn_chip', 'مفروش') + '</span>' : '') +
             statusBadge(l) +
           '</div>' +
           '<h2 class="det__title">' + AQ.esc(l.title) + '</h2>' +
@@ -240,13 +279,13 @@
           '<div class="det__price' + (AQ.hasPrice(l) ? '' : ' is-na') + '">' +
             (AQ.hasPrice(l)
               ? AQ.fmtNum(l.price) + ' <small>' + AQ.priceNote(l) + '</small>'
-              : 'السعر عند الاتصال') +
+              : t('price_on_call', 'السعر عند الاتصال')) +
           '</div>' +
           specBox(l) +
           (l.description ? '<p class="det__desc">' + AQ.esc(l.description) + '</p>' : '') +
           '<div class="det__actions">' +
-            '<button class="btn btn--ghost" data-share>📤 شارك الشقة</button>' +
-            '<a class="btn btn--wa" id="detWa" href="#" target="_blank" rel="noopener">💬 كلّمنا واتساب</a>' +
+            '<button class="btn btn--ghost" data-share>' + t('share_btn', '📤 شارك الشقة') + '</button>' +
+            '<a class="btn btn--wa" id="detWa" href="#" target="_blank" rel="noopener">' + t('wa_btn', '💬 كلّمنا واتساب') + '</a>' +
           '</div>' +
           bookingFormHTML() +
         '</div>' +
@@ -268,8 +307,8 @@
 
     var s = AQ.getData().settings;
     $('#detWa').href = AQ.waLink(s.whatsapp,
-      'السلام عليكم، مستفسر عن الشقة:\n' + l.title +
-      '\nكود: ' + l.ref + '\n' + AQ.priceLabel(l));
+      t('wa_detail_greet', 'السلام عليكم، مستفسر عن الشقة:') + '\n' + l.title +
+      '\n' + t('label_code', 'كود') + ': ' + l.ref + '\n' + AQ.priceLabel(l));
 
     if (location.hash !== '#' + encodeURIComponent(l.ref)) {
       try { history.replaceState(null, '', '#' + encodeURIComponent(l.ref)); } catch (e) {}
@@ -312,11 +351,11 @@
     $('#fldPhone').classList.toggle('field--err', !phoneOk);
     if (!phoneOk) ok = false;
 
-    if (!ok) { AQ.toast('راجع البيانات المطلوبة', 'err'); return; }
+    if (!ok) { AQ.toast(t('toast_bad_data', 'راجع البيانات المطلوبة'), 'err'); return; }
 
     var msg = AQ.bookingMessage(l, { name: name, phone: phone, note: note });
     AQ.openWhatsApp(AQ.getData().settings.whatsapp, msg);
-    AQ.toast('تم تجهيز الرسالة — هتفتح واتساب دلوقتي ✓', 'ok');
+    AQ.toast(t('toast_wa_ready', 'تم تجهيز الرسالة — هتفتح واتساب دلوقتي ✓'), 'ok');
   }
 
   /* ---------- events ---------- */
@@ -375,10 +414,10 @@
           navigator.share({ title: l.title, text: text, url: AQ.listingUrl(l) || undefined }).catch(function () {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(function () {
-            AQ.toast('تم نسخ بيانات الشقة ✓', 'ok');
+            AQ.toast(t('toast_copied', 'تم نسخ بيانات الشقة ✓'), 'ok');
           });
         } else {
-          AQ.toast('انسخ اللينك من شريط العنوان', 'info');
+          AQ.toast(t('toast_copy_link', 'انسخ اللينك من شريط العنوان'), 'info');
         }
       }
     });
@@ -407,6 +446,32 @@
         $('#burger').textContent = '☰';
       });
     });
+
+    $('#langBtn').addEventListener('click', function () {
+      if (window.I18N) I18N.set(I18N.lang() === 'ar' ? 'en' : 'ar');
+    });
+
+    document.addEventListener('aq:lang', function () {
+      applySettings();
+      render();
+      if (state.current) openDetail(state.current.id);
+    });
+
+    /* card hover slideshow (delegated) */
+    var grid = $('#grid');
+    grid.addEventListener('mouseover', function (e) {
+      var media = e.target.closest('.card__media');
+      if (media && grid.contains(media)) startSlides(media);
+    });
+    grid.addEventListener('mouseout', function (e) {
+      var media = e.target.closest('.card__media');
+      if (!media) return;
+      if (e.relatedTarget && media.contains(e.relatedTarget)) return;
+      stopSlides(media);
+    });
+    grid.addEventListener('mouseleave', function () {
+      $$('.card__media', grid).forEach(stopSlides);
+    });
   }
 
   /* ---------- boot ---------- */
@@ -414,8 +479,8 @@
     var data = AQ.getData();
     if (!data.listings.length && !window.LISTINGS_DATA) {
       $('#grid').innerHTML =
-        '<div class="empty"><b>تعذّر تحميل بيانات الشقق</b>' +
-        '<p>اتأكد إنك بتفتح الموقع من سيرفر محلي أو إن ملف data/listings.js موجود.</p></div>';
+        '<div class="empty"><b>' + t('data_error_b', 'تعذّر تحميل بيانات الشقق') + '</b>' +
+        '<p>' + t('data_error_p', 'اتأكد إنك بتفتح الموقع من سيرفر محلي أو إن ملف data/listings.js موجود.') + '</p></div>';
       return;
     }
     applySettings();

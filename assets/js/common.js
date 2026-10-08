@@ -28,6 +28,12 @@
       .replace(/'/g, '&#39;');
   };
 
+  /* ---------- i18n (admin has no I18N loaded → Arabic fallback) ---------- */
+  Common.t = function (key, fallback) {
+    if (global.I18N && global.I18N.t) return global.I18N.t(key);
+    return fallback !== undefined ? fallback : key;
+  };
+
   /* ---------- numbers & price ---------- */
   Common.fmtNum = function (n) {
     n = Number(n);
@@ -40,32 +46,36 @@
   };
 
   Common.priceNote = function (listing) {
-    return listing.type === 'rent' ? 'جنيه / شهر' : 'جنيه';
+    return listing.type === 'rent'
+      ? Common.t('price_month', 'جنيه / شهر')
+      : Common.t('price_cash', 'جنيه');
   };
 
   Common.priceLabel = function (listing) {
-    if (!Common.hasPrice(listing)) return 'السعر عند الاتصال';
+    if (!Common.hasPrice(listing)) return Common.t('price_on_call', 'السعر عند الاتصال');
     return Common.fmtNum(listing.price) + ' ' + Common.priceNote(listing);
   };
 
   /* ---------- labels ---------- */
   Common.typeLabel = function (type) {
-    return type === 'rent' ? 'إيجار' : 'تمليك';
+    return type === 'rent'
+      ? Common.t('type_rent', 'إيجار')
+      : Common.t('type_sale', 'تمليك');
   };
 
   Common.statusLabel = function (status) {
-    return status === 'booked' ? 'محجوز'
-      : status === 'sold' ? 'تم البيع'
-      : 'متاح';
+    return status === 'booked' ? Common.t('status_booked', 'محجوز')
+      : status === 'sold' ? Common.t('status_sold', 'تم البيع')
+      : Common.t('status_available', 'متاح');
   };
 
   Common.roomsLabel = function (rooms) {
     rooms = Number(rooms) || 0;
-    if (rooms <= 0) return 'استديو';
-    if (rooms === 1) return 'غرفة واحدة';
-    if (rooms === 2) return 'غرفتين';
-    if (rooms <= 10) return rooms + ' غرف';
-    return rooms + ' غرفة';
+    if (rooms <= 0) return Common.t('rooms_studio', 'استديو');
+    if (rooms === 1) return Common.t('rooms_1', 'غرفة واحدة');
+    if (rooms === 2) return Common.t('rooms_2', 'غرفتين');
+    if (rooms <= 10) return Common.t('rooms_n', '%d غرف').replace('%d', rooms);
+    return Common.t('rooms_many', '%d غرفة').replace('%d', rooms);
   };
 
   /* ---------- whatsapp ---------- */
@@ -99,20 +109,22 @@
   Common.bookingMessage = function (listing, form) {
     form = form || {};
     var lines = [];
-    lines.push('السلام عليكم، عايز أحجز/أستفسر عن الشقة دي:');
+    lines.push(Common.t('bk_greet', 'السلام عليكم، عايز أحجز/أستفسر عن الشقة دي:'));
     lines.push('');
     lines.push('🏠 ' + listing.title);
     lines.push('📍 ' + (listing.city || '') + (listing.district ? ' — ' + listing.district : ''));
     lines.push('💰 ' + Common.priceLabel(listing));
-    lines.push('🔖 النوع: ' + Common.typeLabel(listing.type) + (listing.furnished ? ' — مفروش' : ''));
-    lines.push('🔢 كود الشقة: ' + (listing.ref || '-'));
+    lines.push(Common.t('bk_label_type', '🔖 النوع: ') + Common.typeLabel(listing.type) +
+      (listing.furnished ? Common.t('furn_suffix', ' — مفروش') : ''));
+    lines.push(Common.t('bk_label_code', '🔢 كود الشقة: ') + (listing.ref || '-'));
     var link = Common.listingUrl(listing);
     if (link) lines.push('🔗 ' + link);
-    if (form.name) { lines.push(''); lines.push('👤 الاسم: ' + form.name); }
-    if (form.phone) { lines.push('📱 التليفون: ' + form.phone); }
-    if (form.note) { lines.push('📝 ملاحظات: ' + form.note); }
+    if (form.name) { lines.push(''); lines.push(Common.t('bk_label_name', '👤 الاسم: ') + form.name); }
+    if (form.phone) { lines.push(Common.t('bk_label_phone', '📱 التليفون: ') + form.phone); }
+    if (form.note) { lines.push(Common.t('bk_label_note', '📝 ملاحظات: ') + form.note); }
     lines.push('');
-    lines.push('(اتبعت من موقع ' + (Common.getData().settings.siteName || 'العقارات') + ')');
+    lines.push(Common.t('bk_from', '(اتبعت من موقع %s)')
+      .replace('%s', Common.getData().settings.siteName || 'العقارات'));
     return lines.join('\n');
   };
 

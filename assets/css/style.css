@@ -74,6 +74,12 @@ button{cursor:pointer;background:none;border:0}
 }
 .hdr__wa:hover{transform:translateY(-1px);background:var(--graphite)}
 .hdr__burger{display:none;font-size:22px;padding:6px 8px}
+.hdr__lang{
+  display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:32px;
+  padding:0 10px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--paper);
+  font-size:13px;font-weight:900;color:var(--t-hi);cursor:pointer;transition:.15s;flex:none;
+}
+.hdr__lang:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 @media(max-width:860px){
   .hdr__nav{display:none}
   .hdr__nav.is-open{
@@ -173,7 +179,14 @@ button{cursor:pointer;background:none;border:0}
   width:100%;height:100%;object-fit:cover;
   transition:transform .5s var(--ease);
 }
-.card:hover .card__media img{transform:scale(1.04)}
+.card__slides{position:absolute;inset:0}
+.card__media .card__slides img{
+  position:absolute;inset:0;
+  opacity:0;
+  transition:opacity .55s var(--ease),transform .5s var(--ease);
+}
+.card__media .card__slides img.is-on{opacity:1}
+.card:hover .card__media img.is-on{transform:scale(1.04)}
 .card__badges{position:absolute;top:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:75%}
 .badge{
   font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:3px;
@@ -359,3 +372,15 @@ button{cursor:pointer;background:none;border:0}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* ---------------- LTR (English) overrides ---------------- */
+[dir=ltr] .f-search input{padding:10px 14px 10px 38px}
+[dir=ltr] .f-search svg{right:auto;left:12px}
+[dir=ltr] .f-toggle button{border-left:0;border-right:1px solid var(--line)}
+[dir=ltr] .f-toggle button:last-child{border-right:0}
+[dir=ltr] .card__badges{right:auto;left:10px}
+[dir=ltr] .card__count{left:auto;right:10px}
+[dir=ltr] .modal__close{left:auto;right:12px}
+[dir=ltr] .det__nav--prev{right:auto;left:12px}
+[dir=ltr] .det__nav--next{left:auto;right:12px}
+[dir=ltr] .fab-wa{left:auto;right:20px}
