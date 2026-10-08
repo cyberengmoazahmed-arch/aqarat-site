@@ -16,6 +16,23 @@
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function t(key, fallback) { return AQ.t(key, fallback); }
 
+  function countUp(el, to) {
+    if (!el) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = to;
+      return;
+    }
+    var t0 = performance.now();
+    var dur = 850;
+    el.textContent = '0';
+    function step(now) {
+      var p = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
   function applySettings() {
     var s = AQ.getData().settings;
     var name = s.siteName || 'عقاراتي';
@@ -39,8 +56,8 @@
     var avail = listings.filter(function (l) { return l.status === 'available'; }).length;
     var cities = {};
     listings.forEach(function (l) { if (l.city) cities[l.city] = 1; });
-    $('#stAvail').textContent = listings.length ? avail : '0';
-    $('#stCities').textContent = Object.keys(cities).length || '0';
+    countUp($('#stAvail'), listings.length ? avail : 0);
+    countUp($('#stCities'), Object.keys(cities).length || 0);
     $('#year').textContent = new Date().getFullYear();
 
     var citySel = $('#fCity');
@@ -122,23 +139,30 @@
     }).join('') + '</div>';
   }
 
-  function cardHTML(l) {
+  function cardHTML(l, idx) {
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
     var chips = '';
     chips += '<span class="chip">🛏 ' + AQ.esc(AQ.roomsLabel(l.rooms)) + '</span>';
     chips += '<span class="chip">🚿 ' + (l.baths || 0) + ' ' + t('label_baths', 'حمام') + '</span>';
     if (l.area) chips += '<span class="chip">📐 ' + l.area + ' ' + t('label_area_unit', 'م²') + '</span>';
     if (l.furnished) chips += '<span class="chip">🪑 ' + t('label_furn_chip', 'مفروش') + '</span>';
 
+    var dots = imgs.length > 1
+      ? '<span class="card__dots">' + imgs.map(function (_, i) {
+          return '<i' + (i === 0 ? ' class="is-on"' : '') + '></i>';
+        }).join('') + '</span>'
+      : '';
+
     return '' +
-      '<article class="card" data-id="' + AQ.esc(l.id) + '">' +
+      '<article class="card" data-id="' + AQ.esc(l.id) + '" style="--i:' + (idx || 0) + '">' +
         '<div class="card__media" data-open="' + AQ.esc(l.id) + '">' +
           cardSlides(l) +
           '<div class="card__badges">' +
             '<span class="badge badge--type">' + AQ.typeLabel(l.type) + '</span>' +
             statusBadge(l) +
           '</div>' +
-          ((l.images && l.images.length > 1)
-            ? '<span class="card__count">📷 1/' + l.images.length + '</span>' : '') +
+          (imgs.length > 1 ? '<span class="card__count">📷 1/' + imgs.length + '</span>' : '') +
+          dots +
         '</div>' +
         '<div class="card__body">' +
           '<div class="card__ref">' + t('label_code', 'كود') + ' ' + AQ.esc(l.ref) + '</div>' +
@@ -180,31 +204,52 @@
         '</div>';
       return;
     }
-    grid.innerHTML = list.map(cardHTML).join('');
+    grid.innerHTML = list.map(function (l, i) { return cardHTML(l, i); }).join('');
+    peekSlides();
   }
 
-  /* ---------- card hover slideshow ---------- */
+  /* ---------- card hover/touch slideshow ---------- */
+  function setSlide(media, i) {
+    var imgs = $$('.card__slides img', media);
+    if (!imgs.length) return;
+    i = (i + imgs.length) % imgs.length;
+    imgs.forEach(function (im, k) { im.classList.toggle('is-on', k === i); });
+    var c = $('.card__count', media);
+    if (c && imgs.length > 1) c.textContent = '📷 ' + (i + 1) + '/' + imgs.length;
+    $$('.card__dots i', media).forEach(function (d, k) { d.classList.toggle('is-on', k === i); });
+  }
+
   function startSlides(media) {
     if (media._aqTimer) return;
     var imgs = $$('.card__slides img', media);
     if (imgs.length < 2) return;
     var i = 0;
+    $$('.card__slides img', media).forEach(function (im, k) { if (im.classList.contains('is-on')) i = k; });
     media._aqTimer = setInterval(function () {
-      imgs[i].classList.remove('is-on');
+      setSlide(media, i + 1);
       i = (i + 1) % imgs.length;
-      imgs[i].classList.add('is-on');
-      var c = $('.card__count', media);
-      if (c) c.textContent = '📷 ' + (i + 1) + '/' + imgs.length;
     }, 1300);
   }
 
   function stopSlides(media) {
     if (!media) return;
     if (media._aqTimer) { clearInterval(media._aqTimer); media._aqTimer = null; }
-    var imgs = $$('.card__slides img', media);
-    imgs.forEach(function (im, i) { im.classList.toggle('is-on', i === 0); });
-    var c = $('.card__count', media);
-    if (c && imgs.length > 1) c.textContent = '📷 1/' + imgs.length;
+    setSlide(media, 0);
+  }
+
+  /* one-time auto "peek" so multi-image cards show they rotate (works on touch too) */
+  function peekSlides() {
+    $$('.card__media', $('#grid')).forEach(function (media, idx) {
+      if ($$('.card__slides img', media).length < 2) return;
+      setTimeout(function () {
+        if (media._aqTimer || media._aqPeeked) return;
+        media._aqPeeked = 1;
+        setSlide(media, 1);
+        setTimeout(function () {
+          if (!media._aqTimer) setSlide(media, 0);
+        }, 1500);
+      }, 500 + idx * 130);
+    });
   }
 
   /* ---------- detail modal ---------- */
@@ -472,6 +517,54 @@
     grid.addEventListener('mouseleave', function () {
       $$('.card__media', grid).forEach(stopSlides);
     });
+
+    /* touch swipe on card image (mobile gallery) */
+    var touch = null;
+    var swiped = false;
+    grid.addEventListener('touchstart', function (e) {
+      var media = e.target.closest('.card__media');
+      touch = media ? { x: e.touches[0].clientX, y: e.touches[0].clientY, media: media } : null;
+      swiped = false;
+    }, { passive: true });
+    grid.addEventListener('touchend', function (e) {
+      if (!touch) return;
+      var dx = e.changedTouches[0].clientX - touch.x;
+      var dy = e.changedTouches[0].clientY - touch.y;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        var imgs = $$('.card__slides img', touch.media);
+        if (imgs.length > 1) {
+          swiped = true;
+          var cur = 0;
+          imgs.forEach(function (im, i) { if (im.classList.contains('is-on')) cur = i; });
+          var fwd = document.documentElement.dir === 'ltr' ? dx < 0 : dx > 0;
+          setSlide(touch.media, cur + (fwd ? 1 : -1));
+        }
+      }
+      touch = null;
+    }, { passive: true });
+    grid.addEventListener('click', function (e) {
+      if (swiped) { swiped = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+
+    /* sticky header shadow on scroll */
+    var hdr = $('.hdr');
+    window.addEventListener('scroll', function () {
+      hdr.classList.toggle('is-scrolled', (window.scrollY || 0) > 8);
+    }, { passive: true });
+
+    /* reveal-on-scroll */
+    var revs = $$('[data-reveal]');
+    if ('IntersectionObserver' in window && revs.length) {
+      revs.forEach(function (el) { el.classList.add('reveal'); });
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+        });
+      }, { threshold: 0.12 });
+      revs.forEach(function (el) { io.observe(el); });
+    } else {
+      revs.forEach(function (el) { el.classList.add('reveal', 'is-in'); });
+    }
   }
 
   /* ---------- boot ---------- */

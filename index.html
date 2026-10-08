@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/style.css?v=3">
 </head>
 <body>
 
@@ -40,10 +40,10 @@
 
 <section class="hero" id="top">
   <div class="wrap">
-    <span class="hero__eyebrow" data-i18n="hero_eyebrow">عقارات مصر · إيجار وتمليك</span>
-    <h1 data-i18n-html="hero_h1">شقة أحلامك <em>من غير وسطاء</em> — وحجزك على الواتساب</h1>
-    <p id="heroTagline">اختار الشقة اللي عاجباك، دوس «احجز»، والرسالة هتوصل على واتساب على طول بكل التفاصيل.</p>
-    <div class="hero__stats" id="heroStats">
+    <span class="hero__eyebrow" data-i18n="hero_eyebrow" data-reveal>عقارات مصر · إيجار وتمليك</span>
+    <h1 data-i18n-html="hero_h1" data-reveal style="transition-delay:.08s">شقة أحلامك <em>من غير وسطاء</em> — وحجزك على الواتساب</h1>
+    <p id="heroTagline" data-reveal style="transition-delay:.16s">اختار الشقة اللي عاجباك، دوس «احجز»، والرسالة هتوصل على واتساب على طول بكل التفاصيل.</p>
+    <div class="hero__stats" id="heroStats" data-reveal style="transition-delay:.24s">
       <div class="hstat"><b id="stAvail">—</b><span data-i18n="stat_avail">شقة متاحة الآن</span></div>
       <div class="hstat"><b id="stCities">—</b><span data-i18n="stat_cities">محافظة مغطاة</span></div>
       <div class="hstat"><b>100%</b><span data-i18n="stat_instant">حجز فوري واتساب</span></div>
@@ -94,20 +94,20 @@
 
 <section class="how" id="how">
   <div class="wrap">
-    <h2 data-i18n="how_title">إزاي تحجز شقة في 3 خطوات؟</h2>
-    <p data-i18n="how_sub">مفيش مكالمات مزعجة ولا وسطاء — كل حاجة بتتم من الموبايل بتاعك على الواتساب.</p>
+    <h2 data-i18n="how_title" data-reveal>إزاي تحجز شقة في 3 خطوات؟</h2>
+    <p data-i18n="how_sub" data-reveal style="transition-delay:.08s">مفيش مكالمات مزعجة ولا وسطاء — كل حاجة بتتم من الموبايل بتاعك على الواتساب.</p>
     <div class="how__grid">
-      <div class="how__step">
+      <div class="how__step" data-reveal style="transition-delay:.12s">
         <b>1</b>
         <h3 data-i18n="how_s1t">اختار الشقة</h3>
         <p data-i18n="how_s1p">تصفّح الشقق، غيّر الفلاتر (إيجار / تمليك / مفروش)، وشوف الصور والتفاصيل كاملة.</p>
       </div>
-      <div class="how__step">
+      <div class="how__step" data-reveal style="transition-delay:.24s">
         <b>2</b>
         <h3 data-i18n="how_s2t">دوس «احجز»</h3>
         <p data-i18n="how_s2p">اكتب اسمك وتليفونك وملاحظتك — الرسالة هتتجهّز أوتوماتيك بكل بيانات الشقة.</p>
       </div>
-      <div class="how__step">
+      <div class="how__step" data-reveal style="transition-delay:.36s">
         <b>3</b>
         <h3 data-i18n="how_s3t">توصل على واتساب</h3>
         <p data-i18n="how_s3p">الرسالة بتوصل على واتساب مباشرة، ونرد عليك بأقرب وقت لتأكيد الموعد والمعاينة.</p>
@@ -148,8 +148,8 @@
   <div class="modal__panel" id="detPanel"></div>
 </div>
 
-<script src="assets/js/common.js"></script>
-<script src="assets/js/i18n.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/common.js?v=3"></script>
+<script src="assets/js/i18n.js?v=3"></script>
+<script src="assets/js/app.js?v=3"></script>
 </body>
 </html>

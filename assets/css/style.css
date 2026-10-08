@@ -74,12 +74,14 @@ button{cursor:pointer;background:none;border:0}
 }
 .hdr__wa:hover{transform:translateY(-1px);background:var(--graphite)}
 .hdr__burger{display:none;font-size:22px;padding:6px 8px}
+.hdr.is-scrolled{box-shadow:0 8px 22px rgba(10,10,10,.08)}
 .hdr__lang{
   display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:32px;
   padding:0 10px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--paper);
   font-size:13px;font-weight:900;color:var(--t-hi);cursor:pointer;transition:.15s;flex:none;
 }
 .hdr__lang:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hdr__lang:active{transform:scale(.94)}
 @media(max-width:860px){
   .hdr__nav{display:none}
   .hdr__nav.is-open{
@@ -174,6 +176,11 @@ button{cursor:pointer;background:none;border:0}
   transition:box-shadow .25s var(--ease),transform .25s var(--ease),border-color .25s;
 }
 .card:hover{box-shadow:var(--sh-lg);transform:translateY(-3px);border-color:var(--line-2)}
+.grid .card{
+  animation:cardIn .5s var(--ease) backwards;
+  animation-delay:calc(var(--i,0) * 60ms);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .card__media{position:relative;aspect-ratio:4/3;background:var(--sand);overflow:hidden;cursor:pointer}
 .card__media img{
   width:100%;height:100%;object-fit:cover;
@@ -202,6 +209,15 @@ button{cursor:pointer;background:none;border:0}
   position:absolute;bottom:10px;left:10px;background:rgba(10,10,10,.72);color:#fff;
   font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:3px;
 }
+.card__dots{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;z-index:2;
+}
+.card__dots i{
+  width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);
+  box-shadow:0 0 4px rgba(0,0,0,.45);transition:.25s var(--ease);
+}
+.card__dots i.is-on{background:#fff;transform:scale(1.35)}
 .card__body{padding:16px 16px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
 .card__ref{font-size:11.5px;font-weight:800;color:var(--t-lo);letter-spacing:.05em}
 .card__title{font-size:16.5px;font-weight:900;line-height:1.45;cursor:pointer}
@@ -372,6 +388,20 @@ button{cursor:pointer;background:none;border:0}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* ---------------- reveal on scroll ---------------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.is-in{opacity:1;transform:none}
+
+/* ---------------- micro-animations ---------------- */
+.btn:active{transform:scale(.97)}
+.f-toggle button:active{transform:scale(.96)}
+.hdr__nav a{position:relative;transition:color .15s}
+.hdr__nav a::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--ink);
+  transform:scaleX(0);transform-origin:center;transition:transform .25s var(--ease);
+}
+.hdr__nav a:hover::after{transform:scaleX(1)}
 
 /* ---------------- LTR (English) overrides ---------------- */
 [dir=ltr] .f-search input{padding:10px 14px 10px 38px}
