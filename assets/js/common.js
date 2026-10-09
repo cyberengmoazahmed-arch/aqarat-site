@@ -127,13 +127,18 @@
     } catch (e) { return ''; }
   };
 
-  Common.bookingMessage = function (listing, form) {
+  Common.bookingMessage = function (listing, form, lang) {
     form = form || {};
+    var enMode = lang === 'en';
+    function L(k) {
+      var en = listing && listing[k + 'En'];
+      return enMode && en && String(en).trim() ? en : (listing ? listing[k] : '');
+    }
     var lines = [];
     lines.push(Common.t('bk_greet', 'السلام عليكم، عايز أحجز/أستفسر عن الشقة دي:'));
     lines.push('');
-    lines.push('🏠 ' + listing.title);
-    lines.push('📍 ' + (listing.city || '') + (listing.district ? ' — ' + listing.district : ''));
+    lines.push('🏠 ' + L('title'));
+    lines.push('📍 ' + (L('city') || '') + (L('district') ? ' — ' + L('district') : ''));
     lines.push('💰 ' + Common.priceLabel(listing));
     lines.push(Common.t('bk_label_type', '🔖 النوع: ') + Common.typeLabel(listing.type) +
       (listing.furnished ? Common.t('furn_suffix', ' — مفروش') : ''));

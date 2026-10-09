@@ -291,6 +291,10 @@
         floor: 1,
         status: 'available',
         description: '',
+        titleEn: '',
+        cityEn: '',
+        districtEn: '',
+        descriptionEn: '',
         images: [],
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -311,6 +315,10 @@
     $('#fFloor').value = l.floor === undefined ? '' : l.floor;
     $('#fStatus').value = l.status || 'available';
     $('#fDesc').value = l.description || '';
+    $('#fTitleEn').value = l.titleEn || '';
+    $('#fCityEn').value = l.cityEn || '';
+    $('#fDistrictEn').value = l.districtEn || '';
+    $('#fDescEn').value = l.descriptionEn || '';
     $('#fFurn').checked = !!l.furnished;
     $('#fldTitle').classList.remove('field--err');
     $('#fldPrice').classList.remove('field--err');
@@ -383,6 +391,10 @@
     if (!isFinite(l.floor)) l.floor = '';
     l.status = $('#fStatus').value;
     l.description = $('#fDesc').value.trim();
+    l.titleEn = $('#fTitleEn').value.trim();
+    l.cityEn = $('#fCityEn').value.trim();
+    l.districtEn = $('#fDistrictEn').value.trim();
+    l.descriptionEn = $('#fDescEn').value.trim();
     l.furnished = $('#fFurn').checked;
     l.updatedAt = Date.now();
     return l;

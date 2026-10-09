@@ -101,6 +101,7 @@ body{background:var(--bone)}
 }
 .card-box h3{font-size:16.5px;font-weight:900;margin-bottom:4px}
 .card-box .sub{font-size:13px;color:var(--t-lo);margin-bottom:18px}
+.hr{height:1px;background:rgba(128,136,144,.15);margin:4px 0 18px}
 .fgrid{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
 .fgrid .full{grid-column:1/-1}
 @media(max-width:640px){.fgrid{grid-template-columns:1fr}}

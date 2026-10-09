@@ -16,6 +16,10 @@
   function $(s, r) { return (r || document).querySelector(s); }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function t(key, fallback) { return AQ.t(key, fallback); }
+  function ltx(l, k) {
+    var en = l && l[k + 'En'];
+    return l && state.lang === 'en' && en && String(en).trim() ? en : (l ? l[k] : '');
+  }
 
   function countUp(el, to) {
     if (!el) return;
@@ -105,7 +109,8 @@
       if (state.furnished && !l.furnished) return false;
       if (!matchPrice(l, state.price)) return false;
       if (q) {
-        var hay = [l.title, l.city, l.district, l.ref, l.description]
+        var hay = [l.title, l.titleEn, l.city, l.cityEn, l.district, l.districtEn, l.ref, l.description, l.descriptionEn]
+          .filter(function (s) { return !!s; })
           .join(' ').toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
@@ -134,15 +139,15 @@
   }
 
   function cardSlides(l) {
-    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(ltx(l, 'title'))];
     return '<div class="card__slides">' + imgs.map(function (src, i) {
-      return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(l.title) + '" loading="lazy"' +
+      return '<img src="' + AQ.esc(src) + '" alt="' + AQ.esc(ltx(l, 'title')) + '" loading="lazy"' +
         (i === 0 ? ' class="is-on"' : '') + '>';
     }).join('') + '</div>';
   }
 
   function cardHTML(l, idx) {
-    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(ltx(l, 'title'))];
     var chips = '';
     chips += '<span class="chip">🛏 ' + AQ.esc(AQ.roomsLabel(l.rooms)) + '</span>';
     chips += '<span class="chip">🚿 ' + (l.baths || 0) + ' ' + t('label_baths', 'حمام') + '</span>';
@@ -172,8 +177,8 @@
         '</div>' +
         '<div class="card__body">' +
           '<div class="card__ref">' + t('label_code', 'كود') + ' ' + AQ.esc(l.ref) + '</div>' +
-          '<h3 class="card__title" data-open="' + AQ.esc(l.id) + '"><a href="' + AQ.esc(AQ.unitUrl(l)) + '" data-open="' + AQ.esc(l.id) + '">' + AQ.esc(l.title) + '</a></h3>' +
-          '<div class="card__loc">📍 ' + AQ.esc(l.city || '') + (l.district ? ' — ' + AQ.esc(l.district) : '') + '</div>' +
+          '<h3 class="card__title" data-open="' + AQ.esc(l.id) + '"><a href="' + AQ.esc(AQ.unitUrl(l)) + '" data-open="' + AQ.esc(l.id) + '">' + AQ.esc(ltx(l, 'title')) + '</a></h3>' +
+          '<div class="card__loc">📍 ' + AQ.esc(ltx(l, 'city') || '') + (ltx(l, 'district') ? ' — ' + AQ.esc(ltx(l, 'district')) : '') + '</div>' +
           '<div class="card__chips">' + chips + '</div>' +
           '<div class="card__price">' +
           (AQ.hasPrice(l)
@@ -330,10 +335,10 @@
   function compareHTML() {
     var items = state.compare.map(findListing).filter(Boolean);
     function head(l) {
-      var img = (l.images && l.images.length) ? l.images[0] : AQ.placeholder(l.title);
+      var img = (l.images && l.images.length) ? l.images[0] : AQ.placeholder(ltx(l, 'title'));
       return '<th class="cmp__col">' +
-        '<span class="cmp__thumb"><img src="' + AQ.esc(img) + '" alt="' + AQ.esc(l.title) + '"></span>' +
-        '<a class="cmp__name" href="' + AQ.esc(AQ.unitUrl(l)) + '">' + AQ.esc(l.title) + '</a>' +
+        '<span class="cmp__thumb"><img src="' + AQ.esc(img) + '" alt="' + AQ.esc(ltx(l, 'title')) + '"></span>' +
+        '<a class="cmp__name" href="' + AQ.esc(AQ.unitUrl(l)) + '">' + AQ.esc(ltx(l, 'title')) + '</a>' +
         '<button class="cmp__x" type="button" data-cmp="' + AQ.esc(l.id) + '" aria-label="' + t('cmp_remove', 'شيل من المقارنة') + '">✕</button>' +
       '</th>';
     }
@@ -344,8 +349,8 @@
           : '<span class="is-na">' + t('price_on_call', 'السعر عند الاتصال') + '</span>';
       }],
       [t('spec_type', 'النوع'), function (l) { return AQ.typeLabel(l.type); }],
-      [t('label_city', 'المدينة'), function (l) { return AQ.esc(l.city || '—'); }],
-      [t('label_district', 'الحي'), function (l) { return AQ.esc(l.district || '—'); }],
+      [t('label_city', 'المدينة'), function (l) { return AQ.esc(ltx(l, 'city') || '—'); }],
+      [t('label_district', 'الحي'), function (l) { return AQ.esc(ltx(l, 'district') || '—'); }],
       [t('spec_area', 'المساحة'), function (l) { return l.area ? l.area + ' ' + t('unit_m', 'متر') : '—'; }],
       [t('cmp_price_per_m', 'سعر المتر'), function (l) {
         return (AQ.hasPrice(l) && l.area) ? AQ.fmtNum(Math.round(l.price / l.area)) + ' ' + t('price_cash', 'جنيه') : '—';
@@ -386,7 +391,7 @@
 
   /* ---------- detail modal ---------- */
   function galleryHTML(l) {
-    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(ltx(l, 'title'))];
     var main = imgs[state.gallery] || imgs[0];
     var thumbs = imgs.length > 1
       ? '<div class="det__thumbs">' + imgs.map(function (src, i) {
@@ -400,7 +405,7 @@
         '<button class="det__nav det__nav--next" data-gnav="1" aria-label="' + t('gallery_next', 'التالي') + '">' + (rtl ? '‹' : '›') + '</button>'
       : '';
     return '<div class="det__media">' +
-      '<div class="det__main"><img id="detMain" src="' + AQ.esc(main) + '" alt="' + AQ.esc(l.title) + '"></div>' +
+      '<div class="det__main"><img id="detMain" src="' + AQ.esc(main) + '" alt="' + AQ.esc(ltx(l, 'title')) + '"></div>' +
       nav + thumbs + '</div>';
   }
 
@@ -451,15 +456,15 @@
             (l.furnished ? '<span class="badge badge--furn">' + t('label_furn_chip', 'مفروش') + '</span>' : '') +
             statusBadge(l) +
           '</div>' +
-          '<h2 class="det__title">' + AQ.esc(l.title) + '</h2>' +
-          '<div class="card__loc">📍 ' + AQ.esc(l.city || '') + (l.district ? ' — ' + AQ.esc(l.district) : '') + '</div>' +
+          '<h2 class="det__title">' + AQ.esc(ltx(l, 'title')) + '</h2>' +
+          '<div class="card__loc">📍 ' + AQ.esc(ltx(l, 'city') || '') + (ltx(l, 'district') ? ' — ' + AQ.esc(ltx(l, 'district')) : '') + '</div>' +
           '<div class="det__price' + (AQ.hasPrice(l) ? '' : ' is-na') + '">' +
             (AQ.hasPrice(l)
               ? AQ.fmtNum(l.price) + ' <small>' + AQ.priceNote(l) + '</small>'
               : t('price_on_call', 'السعر عند الاتصال')) +
           '</div>' +
           specBox(l) +
-          (l.description ? '<p class="det__desc">' + AQ.esc(l.description) + '</p>' : '') +
+          (ltx(l, 'description') ? '<p class="det__desc">' + AQ.esc(ltx(l, 'description')) + '</p>' : '') +
           '<div class="det__actions">' +
             '<button class="btn btn--ghost" data-share>' + t('share_btn', '📤 شارك الشقة') + '</button>' +
             '<a class="btn btn--ghost" href="' + AQ.esc(AQ.unitUrl(l)) + '" target="_blank" rel="noopener">' + t('open_page', 'صفحة الشقة') + ' 🔗</a>' +
@@ -486,7 +491,7 @@
 
     var s = AQ.getData().settings;
     $('#detWa').href = AQ.waLink(s.whatsapp,
-      t('wa_detail_greet', 'السلام عليكم، مستفسر عن الشقة:') + '\n' + l.title +
+      t('wa_detail_greet', 'السلام عليكم، مستفسر عن الشقة:') + '\n' + ltx(l, 'title') +
       '\n' + t('label_code', 'كود') + ': ' + l.ref + '\n' + AQ.priceLabel(l));
 
     if (location.hash !== '#' + encodeURIComponent(l.ref)) {
@@ -506,7 +511,7 @@
   function galleryTo(i) {
     var l = state.current;
     if (!l) return;
-    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(l.title)];
+    var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(ltx(l, 'title'))];
     state.gallery = (i + imgs.length) % imgs.length;
     $('#detMain').src = imgs[state.gallery];
     $$('.det__thumbs img').forEach(function (t, idx) {
@@ -532,7 +537,7 @@
 
     if (!ok) { AQ.toast(t('toast_bad_data', 'راجع البيانات المطلوبة'), 'err'); return; }
 
-    var msg = AQ.bookingMessage(l, { name: name, phone: phone, note: note });
+    var msg = AQ.bookingMessage(l, { name: name, phone: phone, note: note }, state.lang);
     AQ.openWhatsApp(AQ.getData().settings.whatsapp, msg);
     AQ.toast(t('toast_wa_ready', 'تم تجهيز الرسالة — هتفتح واتساب دلوقتي ✓'), 'ok');
   }
@@ -616,10 +621,10 @@
       if (e.target.closest('[data-share]')) {
         var l = state.current;
         if (!l) return;
-        var text = l.title + '\n' + AQ.priceLabel(l) +
+        var text = ltx(l, 'title') + '\n' + AQ.priceLabel(l) +
           (AQ.listingUrl(l) ? '\n' + AQ.listingUrl(l) : '');
         if (navigator.share) {
-          navigator.share({ title: l.title, text: text, url: AQ.listingUrl(l) || undefined }).catch(function () {});
+          navigator.share({ title: ltx(l, 'title'), text: text, url: AQ.listingUrl(l) || undefined }).catch(function () {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(function () {
             AQ.toast(t('toast_copied', 'تم نسخ بيانات الشقة ✓'), 'ok');
@@ -664,6 +669,7 @@
     });
 
     document.addEventListener('aq:lang', function () {
+      state.lang = (window.I18N && I18N.lang) ? I18N.lang() : state.lang;
       applySettings();
       render();
       if (state.current) openDetail(state.current.id);
