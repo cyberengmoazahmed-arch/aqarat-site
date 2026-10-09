@@ -467,32 +467,44 @@
         '/contents/' + path;
       var token = Common.github.token();
       if (!token) return Promise.reject(new Error('مفيش توكن GitHub محفوظ'));
-      var body = {
-        message: message,
-        content: contentBase64,
-        branch: r.branch
-      };
-      if (sha) body.sha = sha;
-      return fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Accept': 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      }).then(function (res) {
-        if (res.status === 401) throw new Error('التوكن غير صحيح أو منتهي');
-        if (res.status === 403) throw new Error('التوكن مفيهوش صلاحية (لازم Contents: Read & Write)');
-        if (res.status === 404) throw new Error('مش لاقي الريبو/المسار — اتأكد من الإعدادات');
-        if (!res.ok) {
-          return res.json().catch(function () { return {}; }).then(function (j) {
-            throw new Error('خطأ من GitHub: ' + (j.message || res.status));
-          });
-        }
-        return res.json();
-      });
+      var retried = false;
+      function attempt(currentSha) {
+        var body = {
+          message: message,
+          content: contentBase64,
+          branch: r.branch
+        };
+        if (currentSha) body.sha = currentSha;
+        return fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        }).then(function (res) {
+          if (res.status === 401) throw new Error('التوكن غير صحيح أو منتهي');
+          if (res.status === 403) throw new Error('التوكن مفيهوش صلاحية (لازم Contents: Read & Write)');
+          if (res.status === 404) throw new Error('مش لاقي الريبو/المسار — اتأكد من الإعدادات');
+          if (!res.ok) {
+            return res.json().catch(function () { return {}; }).then(function (j) {
+              if (res.status === 409 && !retried) {
+                retried = true;
+                return Common.github.getFile(path).then(function (nf) {
+                  return attempt(nf ? nf.sha : null);
+                });
+              }
+              throw new Error(res.status === 409
+                ? 'الملف اتعدّل من جهة تانية — حدّث الصفحة وحاول تاني: ' + (j.message || '')
+                : 'خطأ من GitHub: ' + (j.message || res.status));
+            });
+          }
+          return res.json();
+        });
+      }
+      return attempt(sha);
     },
     saveDataFile: function (data) {
       var content = Common.utf8ToBase64(Common.dataFileContent(data));
