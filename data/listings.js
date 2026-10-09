@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791518155050,
+  "updated": 1791518228326,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -131,7 +131,6 @@ window.LISTINGS_DATA = {
       "status": "available",
       "description": "🏡 من المالك مباشرة\n✨ شقة مفروشة للإيجار – B11\n\n📏 116 متر\n🛌 3 غرف نوم\n🚿 2 حمّام\n⬆️ الدور الرابع\n📍 موقع مميّز أمام مول All Seasons Park",
       "images": [
-        "assets/listings/sample-1.svg",
         "assets/listings/aq-1710000006-6650-2.jpg",
         "assets/listings/aq-1710000006-6650-3.jpg",
         "assets/listings/aq-1710000006-6650-4.jpg",
@@ -140,7 +139,7 @@ window.LISTINGS_DATA = {
         "assets/listings/aq-1710000006-6650-7.jpg"
       ],
       "createdAt": 1710000006000,
-      "updatedAt": 1791518141362
+      "updatedAt": 1791518228326
     },
     {
       "id": "aq-1710000007-8810",
