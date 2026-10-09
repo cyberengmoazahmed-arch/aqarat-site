@@ -333,16 +333,23 @@
     var imgs = st.editing.images || [];
     var box = $('#imgs');
     if (!imgs.length) {
-      box.innerHTML = '<p class="up-note" style="margin:0">لسه مفيش صور — الصورة الأولى هتبقى غلاف الشقة.</p>';
+      box.innerHTML = '<p class="up-note" style="margin:0">لسه مفيش صور — أول صورة بتبقى غلاف الشقة، وبعد ما ترفع صور اضغط ⭐ على أي صورة تخليها غلاف الواجهة.</p>';
       return;
     }
     box.innerHTML = imgs.map(function (src, i) {
       var cap = src.indexOf('data:') === 0 ? 'جديدة' :
         (src.indexOf('http') === 0 ? 'رابط' : src.split('/').pop());
-      return '<figure class="' + (src.indexOf('data:') === 0 ? 'new' : '') + '">' +
+      var cover = i === 0;
+      var ops = '';
+      if (!cover) ops += '<button class="op op--star" type="button" data-cover="' + i + '" title="خليها غلاف الشقة">⭐</button>';
+      if (i > 0) ops += '<button class="op" type="button" data-up="' + i + '" title="قدّمها">▲</button>';
+      if (i < imgs.length - 1) ops += '<button class="op" type="button" data-down="' + i + '" title="أخّرها">▼</button>';
+      ops += '<button class="rm" type="button" data-rm="' + i + '" aria-label="حذف الصورة">✕</button>';
+      return '<figure class="' + (src.indexOf('data:') === 0 ? 'new' : '') + (cover ? ' is-cover' : '') + '">' +
+        (cover ? '<span class="cover-tag">⭐ الغلاف</span>' : '') +
         '<img src="' + AQ.esc(src) + '" alt="">' +
         '<figcaption>' + AQ.esc(cap) + '</figcaption>' +
-        '<button class="rm" type="button" data-rm="' + i + '" aria-label="حذف الصورة">✕</button>' +
+        '<div class="imgs-ops">' + ops + '</div>' +
       '</figure>';
     }).join('');
   }
@@ -800,6 +807,32 @@
       if (e.key === 'Enter') { e.preventDefault(); $('#btnAddUrl').click(); }
     });
     $('#imgs').addEventListener('click', function (e) {
+      var imgs = st.editing.images;
+
+      var cover = e.target.closest('[data-cover]');
+      if (cover) {
+        var ci = Number(cover.dataset.cover);
+        var item = imgs.splice(ci, 1)[0];
+        imgs.unshift(item);
+        renderImgs();
+        AQ.toast('تم اختيارها غلاف الشقة ⭐ (لسه محتاج حفظ)', 'ok');
+        return;
+      }
+
+      var up = e.target.closest('[data-up]');
+      if (up) {
+        var ui = Number(up.dataset.up);
+        if (ui > 0) { var a = imgs[ui - 1]; imgs[ui - 1] = imgs[ui]; imgs[ui] = a; renderImgs(); }
+        return;
+      }
+
+      var down = e.target.closest('[data-down]');
+      if (down) {
+        var di = Number(down.dataset.down);
+        if (di < imgs.length - 1) { var b2 = imgs[di + 1]; imgs[di + 1] = imgs[di]; imgs[di] = b2; renderImgs(); }
+        return;
+      }
+
       var b = e.target.closest('[data-rm]');
       if (!b) return;
       var i = Number(b.dataset.rm);
