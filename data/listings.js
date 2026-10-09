@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791517891030,
+  "updated": 1791518155050,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -118,23 +118,29 @@ window.LISTINGS_DATA = {
     {
       "id": "aq-1710000006-6650",
       "ref": "A-1006",
-      "title": "استديو مفروش — وسط البلد",
+      "title": "شقة مفروشة للإيجار – B11",
       "type": "rent",
       "furnished": true,
-      "price": 900000000,
+      "price": null,
       "city": "القاهرة",
-      "district": "وسط البلد",
-      "rooms": 0,
-      "baths": 1,
-      "area": 40,
-      "floor": 2,
+      "district": "مدينتي",
+      "rooms": 3,
+      "baths": 2,
+      "area": 116,
+      "floor": 4,
       "status": "available",
-      "description": "استديو مفروش بالكامل في عمارة تاريخية مجددة، قريب من شارع طلعت حرب والمترو، مناسب للسكن الفردي أو المكاتب الصغيرة، إنترنت جاهز.",
+      "description": "🏡 من المالك مباشرة\n✨ شقة مفروشة للإيجار – B11\n\n📏 116 متر\n🛌 3 غرف نوم\n🚿 2 حمّام\n⬆️ الدور الرابع\n📍 موقع مميّز أمام مول All Seasons Park",
       "images": [
-        "assets/listings/sample-1.svg"
+        "assets/listings/sample-1.svg",
+        "assets/listings/aq-1710000006-6650-2.jpg",
+        "assets/listings/aq-1710000006-6650-3.jpg",
+        "assets/listings/aq-1710000006-6650-4.jpg",
+        "assets/listings/aq-1710000006-6650-5.jpg",
+        "assets/listings/aq-1710000006-6650-6.jpg",
+        "assets/listings/aq-1710000006-6650-7.jpg"
       ],
       "createdAt": 1710000006000,
-      "updatedAt": 1791446370457
+      "updatedAt": 1791518141362
     },
     {
       "id": "aq-1710000007-8810",
