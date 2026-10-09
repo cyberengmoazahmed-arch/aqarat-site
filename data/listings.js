@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791518228326,
+  "updated": 1791524832188,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -173,7 +173,11 @@ window.LISTINGS_DATA = {
         "assets/listings/aq-1710000007-8810-10.jpg"
       ],
       "createdAt": 1710000007000,
-      "updatedAt": 1791517866400
+      "updatedAt": 1791524832188,
+      "titleEn": "",
+      "cityEn": "",
+      "districtEn": "",
+      "descriptionEn": ""
     }
   ]
 };
