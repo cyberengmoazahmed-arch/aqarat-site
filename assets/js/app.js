@@ -395,7 +395,7 @@
     var main = imgs[state.gallery] || imgs[0];
     var thumbs = imgs.length > 1
       ? '<div class="det__thumbs">' + imgs.map(function (src, i) {
-          return '<img src="' + AQ.esc(src) + '" data-thumb="' + i + '" class="' +
+          return '<img src="' + AQ.esc(src) + '" data-thumb="' + i + '" loading="lazy" decoding="async" class="' +
             (i === state.gallery ? 'is-on' : '') + '" alt="' + t('gallery_img', 'صورة') + ' ' + (i + 1) + '">';
         }).join('') + '</div>'
       : '';
@@ -405,8 +405,23 @@
         '<button class="det__nav det__nav--next" data-gnav="1" aria-label="' + t('gallery_next', 'التالي') + '">' + (rtl ? '‹' : '›') + '</button>'
       : '';
     return '<div class="det__media">' +
-      '<div class="det__main"><img id="detMain" src="' + AQ.esc(main) + '" alt="' + AQ.esc(ltx(l, 'title')) + '"></div>' +
+      '<div class="det__main" id="detMainWrap"><img id="detMain" decoding="async" fetchpriority="high" src="' + AQ.esc(main) + '" alt="' + AQ.esc(ltx(l, 'title')) + '"></div>' +
       nav + thumbs + '</div>';
+  }
+
+  function bindMainLoad() {
+    var img = $('#detMain');
+    if (!img) return;
+    img.parentElement.classList.remove('is-loaded');
+    img.addEventListener('load', function handler() {
+      img.removeEventListener('load', handler);
+      if (img.parentElement) img.parentElement.classList.add('is-loaded');
+    });
+    img.addEventListener('error', function handler() {
+      img.removeEventListener('error', handler);
+      if (img.parentElement) img.parentElement.classList.add('is-loaded');
+    });
+    if (img.complete && img.naturalWidth) img.parentElement.classList.add('is-loaded');
   }
 
   function specBox(l) {
@@ -485,9 +500,11 @@
     if ($('#cmpModal').classList.contains('is-open')) closeCmp();
     state.current = l;
     state.gallery = 0;
+    if (l.images && l.images.length) { var ph = new Image(); ph.src = l.images[0]; }
     $('#detPanel').innerHTML = detailHTML(l);
     $('#detModal').classList.add('is-open');
     document.body.style.overflow = 'hidden';
+    bindMainLoad();
 
     var s = AQ.getData().settings;
     $('#detWa').href = AQ.waLink(s.whatsapp,
@@ -514,6 +531,7 @@
     var imgs = (l.images && l.images.length) ? l.images : [AQ.placeholder(ltx(l, 'title'))];
     state.gallery = (i + imgs.length) % imgs.length;
     $('#detMain').src = imgs[state.gallery];
+    bindMainLoad();
     $$('.det__thumbs img').forEach(function (t, idx) {
       t.classList.toggle('is-on', idx === state.gallery);
     });
