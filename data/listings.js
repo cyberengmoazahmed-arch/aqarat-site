@@ -1,5 +1,5 @@
 window.LISTINGS_DATA = {
-  "updated": 1791447076762,
+  "updated": 1791517891030,
   "settings": {
     "siteName": "عقاراتي",
     "tagline": "إيجار وتمليك — شقق مختارة بعناية",
@@ -139,25 +139,32 @@ window.LISTINGS_DATA = {
     {
       "id": "aq-1710000007-8810",
       "ref": "A-1007",
-      "title": "شقة تمليك بإطلالة بحرية — العين السخنة",
-      "type": "sale",
-      "furnished": false,
+      "title": "شقة  للإيجار  مفروش في B7",
+      "type": "rent",
+      "furnished": true,
       "price": null,
-      "city": "السويس",
+      "city": "lدينتي",
       "district": "العين السخنة",
       "rooms": 3,
-      "baths": 2,
+      "baths": 1,
       "area": 160,
       "floor": 5,
       "status": "available",
-      "description": "شقة تمليك في كومباوند على البحر مباشرة، تشطيب كامل، السعر عند الاتصال ومرونة في شروط السداد.",
+      "description": "v  من المالك مباشرة شقة للإيجار المفروش في مدينتي – B7\n\n▪️ تشطيب خاص\n\n▪️ فرش فندقي راقٍ",
       "images": [
+        "assets/listings/aq-1710000007-8810-1.jpg",
         "assets/listings/aq-1710000007-8810-2.jpg",
-        "assets/listings/aq-1710000007-8810-2.jpg",
-        "assets/listings/aq-1710000007-8810-3.jpg"
+        "assets/listings/aq-1710000007-8810-3.jpg",
+        "assets/listings/aq-1710000007-8810-4.jpg",
+        "assets/listings/aq-1710000007-8810-5.jpg",
+        "assets/listings/aq-1710000007-8810-6.jpg",
+        "assets/listings/aq-1710000007-8810-7.jpg",
+        "assets/listings/aq-1710000007-8810-8.jpg",
+        "assets/listings/aq-1710000007-8810-9.jpg",
+        "assets/listings/aq-1710000007-8810-10.jpg"
       ],
       "createdAt": 1710000007000,
-      "updatedAt": 1791447073073
+      "updatedAt": 1791517866400
     }
   ]
 };
