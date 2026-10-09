@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=3">
+<link rel="stylesheet" href="assets/css/style.css?v=4">
 </head>
 <body>
 
@@ -75,6 +75,7 @@
       <option value="sale-gt3000000" data-i18n="price_sale_gt3m">تمليك أكثر من 3 مليون</option>
     </select>
     <label class="f-check"><input type="checkbox" id="fFurn"> <span data-i18n="furn_check">مفروش</span></label>
+    <button class="f-fav" id="fFav" type="button" aria-label="المفضلة">❤ <span data-i18n="nav_favs">المفضلة</span> (<span id="favN">0</span>)</button>
     <button class="f-reset" id="fReset" type="button" data-i18n="reset_filters">مسح الفلاتر</button>
   </div>
 </section>
@@ -143,13 +144,26 @@
   <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4 0-.5.2-.7l.4-.5c.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5l-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.2-.3-.3-.5-.4z"/></svg>
 </a>
 
+<div class="cmp-bar" id="cmpBar" hidden>
+  <span class="cmp-bar__txt"><b id="cmpCount">0</b> <span data-i18n="cmp_selected">مختارة للمقارنة</span></span>
+  <div class="cmp-bar__acts">
+    <button class="btn btn--dark" id="cmpGo" type="button" data-i18n="cmp_go">قارن الآن</button>
+    <button class="btn btn--ghost" id="cmpClear" type="button" data-i18n="cmp_clear">مسح</button>
+  </div>
+</div>
+
 <div class="modal" id="detModal" role="dialog" aria-modal="true" data-i18n-aria="aria_details" aria-label="تفاصيل الشقة">
   <div class="modal__bd" data-close></div>
   <div class="modal__panel" id="detPanel"></div>
 </div>
 
-<script src="assets/js/common.js?v=3"></script>
-<script src="assets/js/i18n.js?v=3"></script>
-<script src="assets/js/app.js?v=3"></script>
+<div class="modal" id="cmpModal" role="dialog" aria-modal="true" aria-label="مقارنة الشقق">
+  <div class="modal__bd" data-close></div>
+  <div class="modal__panel" id="cmpPanel"></div>
+</div>
+
+<script src="assets/js/common.js?v=4"></script>
+<script src="assets/js/i18n.js?v=4"></script>
+<script src="assets/js/app.js?v=4"></script>
 </body>
 </html>

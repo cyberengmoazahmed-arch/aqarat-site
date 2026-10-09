@@ -1,3 +1,5 @@
 User-agent: *
 Disallow: /_9f3k7x2q.html
 Disallow: /data/auth.js
+
+Sitemap: https://cyberengmoazahmed-arch.github.io/aqarat-site/sitemap.xml
